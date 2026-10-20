@@ -1,0 +1,85 @@
+site_name: SimpleCAD
+site_description: Direct modeling for FreeCAD, in the spirit of SketchUp.
+site_url: https://igsova.github.io/SimpleCAD/
+repo_url: https://github.com/igsova/SimpleCAD
+repo_name: igsova/SimpleCAD
+edit_uri: ''
+copyright: SimpleCAD is released under the MIT License.
+
+# README, CHANGELOG and CONTRIBUTING are added from the repository root.
+hooks:
+  - scripts/docs_hooks.py
+exclude_docs: |
+  requirements.txt
+
+nav:
+  - Home: index.md
+  - User guide: user-guide.md
+  - Tools:
+      - tools/index.md
+      - Draw: tools/draw.md
+      - Modify: tools/modify.md
+      - Surface: tools/surface.md
+      - Inspect: tools/inspect.md
+      - Mesh: tools/mesh.md
+      - Panels and settings: tools/panels.md
+  - AI clients (MCP): mcp.md
+  - Roadmap: roadmap.md
+  - Changelog: changelog.md
+  - Contributing: contributing.md
+  - Architecture: development/architecture.md
+
+theme:
+  name: material
+  logo: images/logo.svg
+  favicon: images/logo.svg
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-night
+        name: Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-sunny
+        name: Light mode
+  features:
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - navigation.footer
+    - toc.follow
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      # GitHub's heading anchors, so links work on GitHub and on the site.
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+  anchors: warn

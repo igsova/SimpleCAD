@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package format="1">
+  <name>SimpleCAD</name>
+  <description>Direct modeling in the spirit of SketchUp: draw, push/pull and edit faces of Part shapes and STL meshes, with no sketches or feature tree.</description>
+  <version>0.37.8</version>
+  <date>2026-09-21</date>
+  <maintainer>SimpleCAD contributors</maintainer>
+  <license file="LICENSE">MIT</license>
+  <url type="repository" branch="main">https://github.com/igsova/SimpleCAD</url>
+  <url type="bugtracker">https://github.com/igsova/SimpleCAD/issues</url>
+  <url type="readme">https://github.com/igsova/SimpleCAD/blob/main/README.md</url>
+  <url type="documentation">https://igsova.github.io/SimpleCAD/</url>
+  <icon>Resources/icons/workbench.svg</icon>
+  <freecadmin>1.1</freecadmin>
+  <tag>direct modeling</tag>
+  <tag>push pull</tag>
+  <tag>mesh</tag>
+  <tag>STL</tag>
+  <tag>MCP</tag>
+  <content>
+    <workbench>
+      <name>SimpleCAD</name>
+      <classname>SimpleCADWorkbench</classname>
+      <subdirectory>./</subdirectory>
+      <icon>Resources/icons/workbench.svg</icon>
+    </workbench>
+  </content>
+</package>

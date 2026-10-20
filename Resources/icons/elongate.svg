@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 56 56">
+  <g fill="none" stroke="#50d6bb" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Original circular hole (subtle dashed outline) -->
+    <circle cx="28" cy="28" r="14" stroke-dasharray="3 3" opacity="0.5"/>
+    <!-- Elongated ellipse -->
+    <ellipse cx="28" cy="28" rx="23" ry="14"/>
+    <!-- Stretch arrows on horizontal axis -->
+    <path d="M42 28h8 M46 24l4 4-4 4"/>
+    <path d="M14 28H6 M10 24l-4 4 4 4"/>
+  </g>
+</svg>

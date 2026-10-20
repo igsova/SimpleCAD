@@ -1,0 +1,41 @@
+/* SimpleCAD's icon colours: dark blue-grey with a teal outline. */
+:root {
+  --md-primary-fg-color: #1b3545;
+  --md-primary-fg-color--light: #2b4d61;
+  --md-primary-fg-color--dark: #10232e;
+  --md-accent-fg-color: #1f9e86;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-hue: 205;
+  --md-accent-fg-color: #50d6bb;
+  --md-typeset-a-color: #50d6bb;
+}
+
+/* Tool pages: toolbar icons keep the dark tile they are drawn for. */
+.md-typeset .tool-icon {
+  width: 1.9em;
+  height: 1.9em;
+  padding: 0.15em;
+  vertical-align: middle;
+  background: #1b2429;
+  border-radius: 0.35em;
+}
+
+.md-typeset .tool-facts {
+  color: var(--md-default-fg-color--light);
+}
+
+.md-typeset .tool-clip video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  background: #0b0f11;
+  border-radius: 0.5em;
+}
+
+.md-typeset .tool-clip figcaption {
+  max-width: none;
+  font-style: normal;
+  color: var(--md-default-fg-color--light);
+}
