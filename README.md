@@ -37,16 +37,9 @@ edited as they are.
   Claude or Codex inspect and edit the open model with the same operations as
   the toolbar.
 
-<table>
-  <tr>
-    <td width="50%"><img src="docs/images/mesh-region.png" alt="Mesh region tool lifting the top of a raw STL mesh, with a soft transition from orange to blue"></td>
-    <td width="50%"><img src="docs/images/curvature.png" alt="Curvature map colouring a lofted vase and a rounded block by bend radius"></td>
-  </tr>
-  <tr>
-    <td>Lift part of a raw STL mesh with a soft transition. The original mesh is kept as a hidden backup.</td>
-    <td>The curvature map colours curved faces by how tightly they bend.</td>
-  </tr>
-</table>
+
+https://github.com/user-attachments/assets/3ee6a401-5bb9-443b-8c6b-4076e62b04a1
+
 
 ## Requirements
 
