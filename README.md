@@ -7,7 +7,7 @@ edited as they are.
 
 [![FreeCAD 1.1](https://img.shields.io/badge/FreeCAD-1.1-red)](https://www.freecad.org)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-![Version 0.37.8](https://img.shields.io/badge/version-0.37.8-lightgrey)
+![Version 0.38.0](https://img.shields.io/badge/version-0.38.0-lightgrey)
 
 ![SimpleCAD drawing a rectangle on a bracket, with its width and height shown beside the preview](docs/images/overview.png)
 
