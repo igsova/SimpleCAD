@@ -916,15 +916,21 @@ def divide_face_with_profile(shape, profile):
 
     Unlike an overlay disk, the inner region and its surrounding face share a
     boundary, so native selection and face deletion work without pick priority.
-    Return None when the profile is already an entire existing face.
+    A profile across regions drawn earlier on the same flat face divides each
+    of them where it crosses. Return None when the profile is already an
+    entire existing face, or only retraces existing edges.
     """
     validate(profile)
     face_normal(profile)
     if (len(shape.Solids) > 1
             or (shape.Solids and len(shape.Faces) != len(shape.Solids[0].Faces))):
         raise ValueError("Separate compound solids or mixed solid/surface objects before drawing a profile.")
-    support, region = profile_support_face(shape, profile)
-    if coinc.same(support, region):
+    supports, region = profile_support_faces(shape, profile)
+    outline = Part.makeCompound(profile.Edges)
+    tolerance = max(1e-6, outline.Length * 1e-7)
+    if region is None and outline.cut(Part.makeCompound(shape.Edges)).Length <= tolerance:
+        return None  # The outline retraces existing edges only.
+    if region is not None and coinc.same(supports[0], region):
         return None
     if shape.Solids:
         _, mapping = shape.Solids[0].generalFuse(profile.Edges)
@@ -936,12 +942,17 @@ def divide_face_with_profile(shape, profile):
         # Profile drawing must preserve pre-existing intersections elsewhere in
         # an open surface collection, just like Subdivide Face.
         from ..modeling.subdivision import replace_surface_face
-        index = next(i for i, face in enumerate(shape.Faces) if face.isSame(support))
-        output, _ = support.generalFuse(profile.Edges)
-        result, _ = replace_surface_face(shape, index, output.Faces)
+        result = shape
+        for support in supports:
+            # Each replacement rebuilds the faces: find the support again.
+            index = next(i for i, face in enumerate(result.Faces)
+                         if face.isSame(support) or coinc.same(face, support))
+            output, _ = result.Faces[index].generalFuse(profile.Edges)
+            result, _ = replace_surface_face(result, index, output.Faces)
     validate(result, solid=bool(shape.Solids))
     if (len(result.Faces) <= len(shape.Faces)
-            or not any(coinc.same(face, region) for face in result.Faces)):
+            or (not any(coinc.same(face, region) for face in result.Faces) if region is not None
+                else outline.cut(Part.makeCompound(result.Edges)).Length > tolerance)):
         raise ValueError("The profile could not form a separate region on this face.")
     if abs(result.Area - shape.Area) > max(1e-4, shape.Area * 1e-5):
         raise ValueError("Drawing a profile must preserve the surface area.")
@@ -1655,19 +1666,23 @@ def matching_support_face(solid, profile):
     raise ValueError("The profile must lie completely on one current flat face of its support.")
 
 
-def profile_support_face(solid, profile):
-    """The face a drawn profile imprints on, and the region it encloses there.
+def profile_support_faces(solid, profile):
+    """The faces a drawn profile imprints on, and the region it encloses there.
 
     As in SketchUp, only the outline must lie on the face: a profile drawn
     around a hole imprints the face, and the hole inside stays a hole. The
-    region is the part of the profile on the face. Returns (face, region).
+    region is the part of the profile on the face. An outline may also cross
+    regions drawn earlier on the same flat face; it then imprints every
+    coplanar face it covers, and the region is None. Returns (faces, region).
     """
     try:
-        return matching_support_face(solid, profile), profile
+        return [matching_support_face(solid, profile)], profile
     except ValueError:
         pass
     n = face_normal(profile)
     outline = Part.makeCompound(profile.Edges)
+    tolerance = max(1e-6, outline.Length * 1e-7)
+    level = []
     for face in solid.Faces:
         try:
             fn = face_normal(face)
@@ -1677,12 +1692,18 @@ def profile_support_face(solid, profile):
             continue
         if not face.BoundBox.intersect(profile.BoundBox):
             continue
-        if abs(face.common(outline).Length - outline.Length) > max(1e-6, outline.Length * 1e-7):
+        level.append(face)
+        if abs(face.common(outline).Length - outline.Length) > tolerance:
             continue
         region = face.common(profile)
         if len(region.Faces) == 1 and region.Area > EPS:
-            return face, region.Faces[0]
-    raise ValueError("The profile must lie completely on one current flat face of its support.")
+            return [face], region.Faces[0]
+    # Across earlier divisions: the outline lies on the faces together, and
+    # each face it imprints shares some of the area it encloses.
+    faces = [face for face in level if face.common(profile).Area > EPS]
+    if len(faces) > 1 and outline.cut(Part.makeCompound(faces)).Length <= tolerance:
+        return faces, None
+    raise ValueError("The profile must lie completely on the current flat faces of its support.")
 
 
 def pull_source(shape, face, include_remainder=True):

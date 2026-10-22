@@ -138,7 +138,7 @@ Rectangle draws a filled rectangular face from two opposite corners. Use it as a
 **Notes**
 
 - Its width and height are shown beside its first two sides while you draw.
-- On a face, the rectangle divides that face into its own region, as Circle and Polygon do, ready for Push/Pull. It must fit entirely on one face. In empty space it creates a filled face.
+- On a face, the rectangle divides that face into its own region, as Circle and Polygon do, ready for Push/Pull. It must fit on that flat surface. Drawn across an earlier rectangle, circle or line there, it divides each region it crosses, so the overlap becomes a region of its own. In empty space it creates a filled face.
 - Creating a rectangle is one Undo step.
 
 **See also:** [Push/Pull](modify.md#pushpull) · [Polygon](#polygon) · [Circle](#circle)
@@ -182,7 +182,7 @@ Circle draws a filled circle from its center and radius. On a flat face it divid
 **Notes**
 
 - The radius is shown beside the preview. A typed size is shown there until the pointer moves.
-- On existing geometry the circle must fit entirely on one flat face. The object keeps its volume; the face is only divided.
+- On existing geometry the circle must fit on one flat surface. It may cross lines and regions drawn there earlier, dividing each one. The object keeps its volume; the face is only divided.
 - In empty space the circle becomes a standalone filled disk.
 - To open a hole, select the inner region and press Delete. To cut a hole with walls, Push/Pull the region to the Opposite face target.
 - Deleting the circular edge merges the two regions again.
@@ -326,7 +326,7 @@ Polygon draws a filled regular polygon from its center and one vertex. You choos
 - The radius is shown beside the preview. A typed size is shown there until the pointer moves.
 - The radius reaches a vertex, not the middle of a side.
 - On a face the polygon becomes a region of that face; in empty space it becomes a standalone filled face.
-- A polygon started on a face must fit inside that one flat face. An oversized polygon or one crossing a hole is refused and the face stays unchanged.
+- A polygon started on a face must fit on that flat surface; it may cross regions drawn there earlier, dividing each one. An oversized polygon or one crossing a hole or gap is refused and the face stays unchanged.
 - Changing Sides and moving the preview make no document changes. Creating the polygon is one Undo step.
 - For irregular outlines, use Line.
 

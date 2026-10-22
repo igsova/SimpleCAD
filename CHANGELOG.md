@@ -10,6 +10,10 @@ commands, and reconnect an MCP client to refresh its tool list.
 - Snapping no longer offers a corner, midpoint or center hidden behind the
   face under the pointer. A click over such a point used to start the drawing
   on that hidden point instead of on the face in front.
+- A rectangle, circle or polygon drawn across a region drawn earlier on the
+  same face now divides both regions, so the overlap becomes a region of its
+  own. It used to be refused with "The profile must lie completely on one
+  current flat face of its support."
 
 ## 0.38.1
 

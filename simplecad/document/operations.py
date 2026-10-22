@@ -557,7 +557,7 @@ def draw_profile(doc, profile, preferred, title):
         if obj in duplicates or not obj.Shape.Faces:
             continue
         try:
-            geo.profile_support_face(obj.Shape, profile)
+            geo.profile_support_faces(obj.Shape, profile)
         except ValueError:
             continue
         result = geo.divide_face_with_profile(obj.Shape, profile)
@@ -568,7 +568,7 @@ def draw_profile(doc, profile, preferred, title):
     if preferred is not None and preferred not in duplicates:
         # A profile started on a face must fit on it, never fall back to an
         # overlapping free face when the containment check fails.
-        geo.profile_support_face(preferred.Shape, profile)
+        geo.profile_support_faces(preferred.Shape, profile)
     return new_shape(doc, profile, title), False
 
 
