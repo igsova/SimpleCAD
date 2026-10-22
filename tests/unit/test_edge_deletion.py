@@ -62,11 +62,13 @@ class EraseGeometryTests(unittest.TestCase):
         self.assertAlmostEqual(complete.Volume, 12000)
 
     def test_coplanar_seams_left_by_push_pull_can_be_erased(self):
-        shape = divided_box()
-        triangle = next(f for f in shape.Faces if len(f.Edges) == 3)
+        # A second drawn division, across the top, keeps Push/Pull from
+        # refining the solid, so the pulled triangle leaves seams beside it.
+        shape = g.divide_face_with_line(divided_box(), V(0, 0, 10), V(40, 30, 10))
+        triangle = next(f for f in shape.Faces if len(f.Edges) == 3 and abs(g.face_normal(f).y) > .999)
         pulled = g.push_pull(shape, triangle, 5)
         selected = [name for name, _ in dividers(pulled)]
-        self.assertTrue(selected)
+        self.assertGreater(len(selected), 1)  # The seams and the top's division.
         result = g.erase_elements(pulled, selected)
         self.assertTrue(result.isValid())
         self.assertAlmostEqual(result.Volume, 13000)

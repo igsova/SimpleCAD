@@ -74,18 +74,20 @@ def run():
     c.click(pos(center))
     c.controls.value.setText("5, 5")
     c.numeric()
-    assert len(doc.Objects) == 2
-    profile = doc.Objects[-1]
-    assert profile.SC_Support == obj
+    # The rectangle divides the top face, as Circle and Polygon do; a separate
+    # face lying on it flickered against the top in the viewport.
+    assert len(doc.Objects) == 1 and len(obj.Shape.Faces) == 7
+    region = next(f for f in obj.Shape.Faces if abs(f.Area - 25) < 1e-9)
+    assert abs(obj.Shape.Volume - 24000) < 1e-5
     update()
-    assert pick(view, doc, pos(profile.Shape.CenterOfMass), True)[0] == profile
+    assert pick(view, doc, pos(region.CenterOfMass), True)[0] == obj
     c.start("PushPull")
-    c.click(pos(profile.Shape.CenterOfMass))
+    c.click(pos(region.CenterOfMass))
     c.controls.value.setText("-4")
     c.numeric()
     assert len(doc.Objects) == 1
     assert abs(obj.Shape.Volume - 23900) < 1e-5
-    passed("Draw on face, choose coplanar profile, cut pocket")
+    passed("Draw a rectangle on a face, divide it, cut pocket")
 
     Gui.Selection.clearSelection()
     Gui.Selection.addSelection(obj)

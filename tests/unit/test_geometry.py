@@ -345,8 +345,10 @@ class DocumentTests(unittest.TestCase):
         shape = self.notched_boss(1.9e-6)
         self.assertTrue(shape.isValid())
         self.assertFalse([f for f in shape.Faces if f.Area < 1e-3])  # no step walls
-        floor = next(f for f in shape.Faces if abs(f.CenterOfMass.z - 40) < 1e-3 and f.Area < 100)
-        self.assertEqual({v.Point.z for v in floor.Vertexes}, {40.0})
+        # The notch floor lands exactly on the box top and merges into it.
+        tops = [f for f in shape.Faces if abs(f.CenterOfMass.z - 40) < 1e-3 and f.normalAt(0, 0).z > .99]
+        self.assertEqual(len(tops), 1)
+        self.assertEqual({v.Point.z for v in tops[0].Vertexes}, {40.0})
         self.assertAlmostEqual(shape.Volume, self.notch_volume(), places=6)
         # A step beyond the contact tolerance is kept.
         stepped = self.notched_boss(.01)

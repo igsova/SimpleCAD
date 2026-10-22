@@ -888,11 +888,16 @@ def divide_face_with_edges(shape, edge, existing_edges=(), surface=False):
     return result, boundary
 
 
-def has_face_divisions(shape):
-    """Detect coplanar neighboring faces whose boundary must survive Push/Pull."""
+def has_face_divisions(shape, pushed=None):
+    """Detect coplanar neighboring faces whose boundary must survive Push/Pull.
+
+    The outline of the face being pushed does not count: the pull moves that
+    face off its plane, so a region drawn flush with an edge still leaves one
+    merged side face, as a separate profile on the solid did.
+    """
     adjacent = {}
     for face in shape.Faces:
-        if not isinstance(face.Surface, Part.Plane):
+        if not isinstance(face.Surface, Part.Plane) or (pushed is not None and face.isSame(pushed)):
             continue
         normal = face_normal(face)
         center = face.CenterOfMass
@@ -2205,7 +2210,7 @@ def push_pull(shape, face, distance, supported=False, was_valid=None):
         if shape.ShapeType != "Face":
             raise ValueError("This shape is open. Push/Pull currently needs a single face or a closed solid.")
         result = face.extrude(normal * distance)
-    if not has_face_divisions(shape):
+    if not has_face_divisions(shape, face):
         result = result.removeSplitter()
     result = clean_solid_faces(result)
     if distance < 0 and shape.Solids:

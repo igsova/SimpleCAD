@@ -138,8 +138,7 @@ Rectangle draws a filled rectangular face from two opposite corners. Use it as a
 **Notes**
 
 - Its width and height are shown beside its first two sides while you draw.
-- On a face of a solid, the rectangle is a separate profile linked to that solid until Push/Pull uses it. Unlike Circle and Polygon, it does not divide the face, and it must fit entirely on one face.
-- Moving such a profile detaches it from the solid.
+- On a face, the rectangle divides that face into its own region, as Circle and Polygon do, ready for Push/Pull. It must fit entirely on one face. In empty space it creates a filled face.
 - Creating a rectangle is one Undo step.
 
 **See also:** [Push/Pull](modify.md#pushpull) · [Polygon](#polygon) · [Circle](#circle)

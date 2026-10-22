@@ -14,6 +14,12 @@ commands, and reconnect an MCP client to refresh its tool list.
 
 ### Fixed
 
+- Rectangle now divides the face it is drawn on, as Circle and Polygon do. It
+  used to add a separate face lying on top, which flickered against the face
+  under it in the viewport.
+- Pulling out a region drawn flush with an edge merges its side into the
+  solid's side instead of leaving a seam, when the solid has no other drawn
+  divisions.
 - Drawing on connected surfaces: a point clicked on a face far from the last
   one, such as the opposite side of a box, could be placed the long way
   around. The solver now also measures the distance off the target face, so
