@@ -529,7 +529,11 @@ class WrapFrame:
         # Import only off the analytic path; it may still be loading.
         from scipy.optimize import least_squares
         target,p = self.mesh.locate(point,face)
-        basis = self.mesh.dual[target]
+        # The target triangle's in-plane coordinates, plus its normal: without
+        # that row a traced point on a face square to the target looked level
+        # with it, and the solver could stall short of an opposite face.
+        basis = np.vstack((self.mesh.dual[target],
+                           self.mesh.normals[target]/np.linalg.norm(self.mesh.a[target])))
 
         def residual(q):
             try:
@@ -538,7 +542,7 @@ class WrapFrame:
             except ValueError:
                 if self._mesh.subset is not None:
                     raise  # Solve on the whole guide, as before it was partial.
-                return np.array((1e3,1e3))
+                return np.array((1e3,1e3,1e3))
 
         seeds = []
         if same_surface(self.face,face):

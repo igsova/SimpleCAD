@@ -12,7 +12,6 @@ between them disappears; and a needle triangle is removed by routing its
 neighbor's edge through the needle's tip. Curved faces and every vertex they
 touch are kept exactly. The flat faces are then rebuilt from their loops.
 """
-import math
 
 import FreeCAD as App
 import Part

@@ -3,7 +3,7 @@ import time
 import FreeCAD as App
 import FreeCADGui as Gui
 import MeshPart
-from simplecad.document import appearance, operations as op
+from simplecad.document import appearance
 from simplecad.core import coincident
 from simplecad.gui.controller import instance
 

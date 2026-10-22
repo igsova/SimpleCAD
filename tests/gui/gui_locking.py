@@ -4,7 +4,6 @@ import FreeCADGui as Gui
 import Part
 from simplecad.document import operations as ops, locking, appearance, visibility
 from simplecad.gui.controller import instance
-from simplecad.gui.face_browser import ROLE
 from simplecad.gui.qt import QtCore, QtWidgets
 try:
     from PySide import QtTest

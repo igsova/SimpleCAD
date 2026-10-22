@@ -17,7 +17,7 @@ def main():
         (folder / 'progress.json').write_text(json.dumps({'stage': message}))
     try:
         progress('Loading FreeCAD mesh libraries')
-        import FreeCAD  # Must precede other native modules.
+        import FreeCAD  # noqa: F401  Must precede other native modules.
         import Mesh
         data = json.loads((folder / 'options.json').read_text())
         operation = data.pop('operation', 'convert')

@@ -51,7 +51,6 @@ def heal_isolated(shape, tolerance, timeout=900, remove_slivers=False):
     the open model stay safe.
     """
     import json
-    import os
     import subprocess
     import shutil
     import tempfile

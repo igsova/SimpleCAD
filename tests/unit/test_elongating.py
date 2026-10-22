@@ -1,11 +1,10 @@
 """Tests for Elongate: stretch circular holes and faces into ellipses or slots."""
-import math
 import unittest
 import FreeCAD as App
 import Part
 from simplecad.core import geometry as g
 from simplecad.document import operations as ops
-from simplecad.modeling.elongating import ElongateProfile, stretch_matrix
+from simplecad.modeling.elongating import ElongateProfile
 from simplecad.mcp.api import ModelAPI
 V = App.Vector
 
@@ -195,7 +194,7 @@ class ElongateTests(unittest.TestCase):
 
         # Push/pull the newly created face upwards by 5 mm
         vol_before = obj.Shape.Volume
-        pulled = ops.extrude(obj, new_face, 5.0)
+        ops.extrude(obj, new_face, 5.0)
         self.assertTrue(obj.Shape.isValid())
         self.assertGreater(obj.Shape.Volume, vol_before)
 
@@ -337,7 +336,7 @@ class ElongateTests(unittest.TestCase):
     def test_elongate_dialog_widgets(self):
         from simplecad.gui.tools.elongate import ElongateDialog, ElongateInput
         from simplecad.gui.qt import QtWidgets
-        app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
+        _app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
         class FakeLabel:
             def setText(self, t): pass
@@ -477,7 +476,7 @@ class ElongateTests(unittest.TestCase):
         c_edge = Part.makeCircle(5, V(20, 20, 10), V(0, 0, 1))
         profile = ElongateProfile(c_edge)
         slot_wire = profile.elongate(4.0, V(1, 0, 0), mode='slot', symmetric=True)
-        wire_obj = ops.new_shape(doc, slot_wire, 'Elongated slot')
+        ops.new_shape(doc, slot_wire, 'Elongated slot')
 
         self.assertEqual(len(doc.Objects), 2)
         healed = ops.heal_dangling_elongations(doc)
@@ -500,7 +499,7 @@ class ElongateTests(unittest.TestCase):
         c_edge = Part.makeCircle(5, V(20, 20, 10), V(0, 0, 1))
         profile = ElongateProfile(c_edge)
         slot_wire = profile.elongate(4.0, V(0, 1, 0), mode='slot', symmetric=False)
-        wire_obj = ops.new_shape(doc, slot_wire, 'Elongated slot')
+        ops.new_shape(doc, slot_wire, 'Elongated slot')
 
         ops.cleanup(doc)
         self.assertEqual(len(doc.Objects), 1)

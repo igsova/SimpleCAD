@@ -8,6 +8,8 @@ edited as they are.
 [![FreeCAD 1.1](https://img.shields.io/badge/FreeCAD-1.1-red)](https://www.freecad.org)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 ![Version 0.38.0](https://img.shields.io/badge/version-0.38.0-lightgrey)
+[![Unit tests](https://github.com/igsova/SimpleCAD/actions/workflows/tests.yml/badge.svg)](https://github.com/igsova/SimpleCAD/actions/workflows/tests.yml)
+[![Lint](https://github.com/igsova/SimpleCAD/actions/workflows/lint.yml/badge.svg)](https://github.com/igsova/SimpleCAD/actions/workflows/lint.yml)
 
 ![SimpleCAD drawing a rectangle on a bracket, with its width and height shown beside the preview](docs/images/overview.png)
 
@@ -126,6 +128,25 @@ Single-letter shortcuts work while the 3D view has focus; see the
 See the [roadmap](docs/roadmap.md) for planned work and the
 [changelog](CHANGELOG.md) for what changed.
 
+## Privacy and safety
+
+- **Nothing leaves your computer.** SimpleCAD makes no network requests: no
+  telemetry, no update checks and no accounts.
+- **The AI connection is off until you start it.** **SimpleCAD → AI connection
+  (MCP)…** starts a server that listens on `127.0.0.1` only and requires a new
+  secret token each time. The AI client you connect sees the model details it
+  asks for. Turn off **Allow model changes** to limit it to inspection. It
+  stops when FreeCAD quits. See the [connection boundary](docs/mcp.md#connection-boundary).
+- **Your model changes only when you apply.** Previews are temporary, each
+  applied edit is a single Undo step, and a failed or cancelled edit leaves the
+  model as it was. A mesh you convert is kept as a hidden backup. SimpleCAD
+  never saves your document.
+- **Heavy work runs in a separate process.** Mesh conversion, mesh edits and
+  healing run in a background worker with a temporary folder that is removed
+  afterwards, so a geometry kernel crash stops the worker, not FreeCAD.
+- **Files stay plain FreeCAD.** Results are ordinary Part and Mesh objects, so
+  a model opens without SimpleCAD installed.
+
 ## Development
 
 ```text
@@ -149,7 +170,11 @@ Run the unit tests with FreeCAD's own Python:
 ```sh
 sh scripts/test_macos.sh                    # macOS, using /Applications/FreeCAD.app
 PYTHONPATH=.:<FreeCAD>/lib <FreeCAD>/bin/python -m unittest discover -s tests/unit
+ruff check .                                # lint, as CI runs it
 ```
+
+Every push and pull request runs the unit tests on Linux with FreeCAD 1.1 from
+conda-forge, and the lint check.
 
 GUI suites run inside a FreeCAD window, one process per suite (with `xvfb-run`
 on a headless Linux machine):

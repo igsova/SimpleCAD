@@ -1,5 +1,4 @@
 """Real FreeCAD rendering/picking, persistent dialog, Undo, and reopened models."""
-from dataclasses import replace
 from pathlib import Path
 import tempfile
 
@@ -11,7 +10,7 @@ from simplecad.core import preferences as prefs, geometry as g
 from simplecad.document import operations as op
 from simplecad.gui.controller import instance
 from simplecad.gui.display import edge_nodes
-from simplecad.gui.snapping import screen, Snapper
+from simplecad.gui.snapping import screen
 from simplecad.gui.settings_dialog import SettingsDialog
 from simplecad.gui.qt import QtCore, QtWidgets
 

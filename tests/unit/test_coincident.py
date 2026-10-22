@@ -128,7 +128,7 @@ class CoincidentDocumentTests(unittest.TestCase):
         return obj
 
     def test_face_beside_a_solid_merges_with_its_coplanar_face(self):
-        block = self.raw(Part.makeBox(10, 10, 10), "Block")
+        self.raw(Part.makeBox(10, 10, 10), "Block")
         flap = self.raw(Part.Face(Part.makePolygon([V(10, 0, 0), V(20, 0, 0), V(20, 10, 0), V(10, 10, 0), V(10, 0, 0)])), "Flap")
         shared = next("Edge" + str(i + 1) for i, e in enumerate(flap.Shape.Edges) if abs(e.CenterOfMass.x - 10) < 1e-9)
         op.delete_selection([(flap, [shared])])
@@ -148,7 +148,7 @@ class CoincidentDocumentTests(unittest.TestCase):
         # Pulling a face of an open surface makes a block and leaves the rest
         # as surfaces. Deleting a side line between them joins them.
         top = Part.makeBox(10, 10, 10)
-        surface = self.raw(Part.makeShell([f for f in top.Faces if f.CenterOfMass.z > 1e-9]), "Rest")
+        self.raw(Part.makeShell([f for f in top.Faces if f.CenterOfMass.z > 1e-9]), "Rest")
         block = self.raw(Part.makeBox(10, 10, 5, V(0, 0, -5)), "Block")
         line = next("Edge" + str(i + 1) for i, e in enumerate(block.Shape.Edges)
                     if abs(e.CenterOfMass.x) < 1e-9 and abs(e.CenterOfMass.z) < 1e-9)
@@ -242,7 +242,7 @@ class CoincidentDocumentTests(unittest.TestCase):
         self.assertEqual(self.doc.UndoCount, count)
 
     def test_cleanup_sews_faces_removes_duplicates_and_saves_with_undo(self):
-        first = self.raw(triangle(V(0, 10, 0)))
+        self.raw(triangle(V(0, 10, 0)))
         self.raw(triangle(V(0, 0, 10)))
         self.raw(triangle(V(0, 10, 0)))
         self.raw(Part.makeLine(A, B))

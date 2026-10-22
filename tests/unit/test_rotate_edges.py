@@ -1,10 +1,8 @@
 """Tests for rotating lines, arcs, and edges on faces and standalone objects."""
-import math
 import unittest
 import FreeCAD as App
 import Part
 from simplecad.document import operations as ops
-from simplecad.core import geometry as geo
 from simplecad.modeling import rotation
 from simplecad.mcp.api import ModelAPI
 V = App.Vector
@@ -74,7 +72,7 @@ class RotateEdgesTests(unittest.TestCase):
 
         # Verify the new crescent face can be push-pulled upwards
         vol_before = obj.Shape.Volume
-        pulled = ops.extrude(obj, bottom_crescent_faces[0], 5.0)
+        ops.extrude(obj, bottom_crescent_faces[0], 5.0)
         self.assertTrue(obj.Shape.isValid())
         self.assertGreater(obj.Shape.Volume, vol_before)
 

@@ -1,5 +1,5 @@
 """Live native material preview, applied in one Undo step or restored on cancel."""
-import FreeCAD as App
+import FreeCAD  # noqa: F401  Load the application before its native modules.
 import FreeCADGui as Gui
 from ...document import appearance
 from ..qt import QtCore, QtGui, QtWidgets

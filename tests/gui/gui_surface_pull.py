@@ -5,7 +5,7 @@ import FreeCAD as App
 import FreeCADGui as Gui
 import Part
 from pivy import coin
-from simplecad.core import geometry as g, coincident as coinc
+from simplecad.core import coincident as coinc
 from simplecad.document import operations as op
 from simplecad.gui.controller import instance
 from simplecad.gui.snapping import pick, screen

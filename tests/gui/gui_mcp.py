@@ -4,13 +4,11 @@ import base64
 import http.client
 import json
 import math
-import os
 import shutil
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
-import threading
 import time
 import uuid
 
@@ -23,7 +21,7 @@ from simplecad.core import preferences
 from simplecad.gui.controller import instance as controller
 from simplecad.mcp.bridge import instance as bridge_instance, Bridge
 from simplecad.mcp.connection import Client, exchange, read_connection
-from simplecad.gui.qt import QtCore, QtGui, QtWidgets
+from simplecad.gui.qt import QtWidgets
 
 
 def run(screenshots=False):

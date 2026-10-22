@@ -3,6 +3,28 @@
 Notable changes to SimpleCAD. Restart FreeCAD after updating to load new
 commands, and reconnect an MCP client to refresh its tool list.
 
+## Unreleased
+
+### Added
+
+- Continuous integration: every push and pull request runs the unit tests
+  headless on Linux with FreeCAD 1.1 from conda-forge, and a ruff lint check
+  for errors (`ruff.toml`). The README shows both results.
+- A Privacy and safety section in the README.
+
+### Fixed
+
+- Drawing on connected surfaces: a point clicked on a face far from the last
+  one, such as the opposite side of a box, could be placed the long way
+  around. The solver now also measures the distance off the target face, so
+  it no longer stalls on a face square to it. This depended on the
+  computer's math library and showed up on the Linux CI runners.
+- Removed unused imports and variables, and a leftover unused computation in
+  planar mesh conversion.
+- The stretch test with a hole in the rigid end measures volume in double
+  precision. FreeCAD's `Mesh.Volume` sums in single precision and was off by
+  0.025 mm³, so the test failed although the stretched mesh was exact.
+
 ## 0.38.0
 
 ### Changed

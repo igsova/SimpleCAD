@@ -10,7 +10,7 @@ sys.path.insert(0, str(ROOT))
 
 
 def main():
-    import FreeCAD  # Must precede other native modules.
+    import FreeCAD  # noqa: F401  Must precede other native modules.
     import Part
     from simplecad.repair.healing import heal
     folder = Path(sys.argv[1])

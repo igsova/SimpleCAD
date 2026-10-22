@@ -160,7 +160,7 @@ class OffsetTests(unittest.TestCase):
     def test_concave_face_and_saved_native_result(self):
         doc=self.doc();points=[V(0,0,0),V(12,0,0),V(12,4,0),V(4,4,0),V(4,12,0),V(0,12,0),V()]
         obj=op.new_shape(doc,Part.Face(Part.makePolygon(points)),'L face')
-        result=op.offset(obj,'Face1',-1)
+        op.offset(obj,'Face1',-1)
         self.assertTrue(obj.Shape.isValid());self.assertEqual(len(obj.Shape.Faces),2)
         self.assertAlmostEqual(obj.Shape.Area,80)
         with tempfile.TemporaryDirectory() as folder:
@@ -205,7 +205,7 @@ class OffsetTests(unittest.TestCase):
         solid_obj = op.new_shape(doc, box, 'BoxWithHole')
         # Create a standalone offset edge object at z=10
         circle_edge = Part.makeCircle(8.0, App.Vector(20, 20, 10), App.Vector(0, 0, 1))
-        wire_obj = op.new_shape(doc, circle_edge, 'Offset edge')
+        op.new_shape(doc, circle_edge, 'Offset edge')
         self.assertEqual(len(doc.Objects), 2)
         self.assertEqual(len(solid_obj.Shape.Faces), 7)
         # Running cleanup should heal the wire into the solid

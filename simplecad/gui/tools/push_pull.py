@@ -1,5 +1,4 @@
 """Interactive Push/Pull dialog and input session for exact distance and direction selection."""
-import math
 import FreeCAD as App
 import FreeCADGui as Gui
 import Part

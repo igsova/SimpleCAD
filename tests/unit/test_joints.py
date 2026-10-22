@@ -8,7 +8,6 @@ import Part
 import MeshPart
 from simplecad.modeling import joints as j, slicing as s
 from simplecad.document import operations as op
-from simplecad.core import geometry as g
 V = App.Vector
 
 

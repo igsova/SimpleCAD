@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 import math
 
-import FreeCAD as App
+import FreeCAD  # noqa: F401  Load the application before its native modules.
 import numpy as np
 import Part
 from pivy import coin

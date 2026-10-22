@@ -2,7 +2,7 @@
 import unittest
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
-import FreeCAD as App
+import FreeCAD  # noqa: F401  Load the application before its native modules.
 import Part
 from simplecad.gui.snapping import pick
 

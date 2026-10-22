@@ -107,7 +107,7 @@ if __name__ == '__main__':
 
 try:
     import FreeCAD as App
-    import Mesh
+    import Mesh  # noqa: F401  Checked with the other native modules.
     import MeshPart
     import Part
 except ImportError:

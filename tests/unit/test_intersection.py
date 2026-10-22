@@ -8,7 +8,6 @@ import Part
 import MeshPart
 from simplecad.document import operations as op, locking
 from simplecad.core import geometry as g
-from simplecad.modeling import intersection
 V = App.Vector
 
 

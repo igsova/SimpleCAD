@@ -8,7 +8,6 @@ import Part
 from simplecad import ROOT
 from simplecad.document import operations as ops, appearance as a, locking
 from simplecad.modeling import subdivision
-from simplecad.core import coincident
 from simplecad.gui.controller import instance
 from simplecad.gui.snapping import screen
 from simplecad.gui.qt import QtWidgets, QtGui

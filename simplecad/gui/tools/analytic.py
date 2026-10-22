@@ -3,7 +3,7 @@ import FreeCAD as App
 import FreeCADGui as Gui
 
 from ...modeling import analytic
-from ..qt import QtCore, QtWidgets
+from ..qt import QtWidgets
 from ..panels import anchor_panel
 
 

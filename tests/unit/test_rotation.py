@@ -1,5 +1,4 @@
 """Rigid world/local rotations preserve geometry and commit in one Undo step."""
-import math
 import tempfile
 from contextlib import contextmanager
 from pathlib import Path

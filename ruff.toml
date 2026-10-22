@@ -1,0 +1,6 @@
+# Lint for errors, not style: syntax errors, undefined names, unused imports
+# and variables. FreeCAD 1.1 ships Python 3.11 on macOS.
+target-version = "py311"
+
+[lint]
+select = ["E9", "F"]

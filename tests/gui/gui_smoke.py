@@ -7,7 +7,7 @@ import FreeCAD as App
 import FreeCADGui as Gui
 from simplecad.gui.controller import instance
 from simplecad.core import geometry as g
-from simplecad.gui.snapping import screen, ray, Snapper, pick
+from simplecad.gui.snapping import screen, Snapper, pick
 
 
 def run():

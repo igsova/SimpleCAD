@@ -18,7 +18,7 @@ def run(screenshot=None):
     host=op.new_shape(doc,Part.makeBox(30,20,8),'Offset test')
     a.commit(a.prepare([(host,['Face1'])]),color=[1,0,0],opacity=57)
     a.commit(a.prepare([(host,['Face6'])]),color=[0.2,0.8,0.4],opacity=80)
-    original=host.Shape;styled=host.Shape.Faces[0].CenterOfMass
+    styled=host.Shape.Faces[0].CenterOfMass
     view=Gui.activeDocument().activeView();view.getCameraNode().orientation.setValue((0,0,0,1));view.fitAll()
     for _ in range(5):QtWidgets.QApplication.processEvents();Gui.updateGui()
     Gui.getMainWindow().activateWindow();Gui.getMainWindow().raise_()
@@ -77,7 +77,7 @@ def run(screenshot=None):
     assert abs(a.expanded(border)[0].Transparency-.2)<1e-6
     doc.undo();assert len(doc.Objects)==1
     # Actual line click and mouse finish, with explicit plane controlling side.
-    line=op.new_shape(doc,Part.makeLine(V(5,5,8),V(25,5,8)),'Offset line')
+    op.new_shape(doc,Part.makeLine(V(5,5,8),V(25,5,8)),'Offset line')
     c.controls.plane.setCurrentText('XY')
     Gui.Selection.clearSelection();Gui.runCommand('SimpleCAD_Offset',0)
     c.click(pos(V(15,5,8)));assert c.offset_input.profile.source.ShapeType=='Edge'

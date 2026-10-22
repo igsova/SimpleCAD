@@ -17,7 +17,7 @@ import tempfile
 import traceback
 from pathlib import Path
 
-import FreeCAD as App
+import FreeCAD  # noqa: F401  Load the application before its native modules.
 import FreeCADGui as Gui
 from PySide import QtCore, QtWidgets
 
