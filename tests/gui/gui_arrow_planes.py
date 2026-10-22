@@ -55,7 +55,7 @@ def run():
         keypress(Qt.Key_Return, c.controls.value)
 
     def corners(obj):
-        return [v.Point for v in obj.Shape.Vertexes]
+        return [v.Point for v in getattr(obj, 'Shape', obj).Vertexes]
 
     def normal_is(plane, axis):
         return abs(plane.normal.dot(axis)) > 1 - 1e-12
@@ -98,7 +98,7 @@ def run():
         print('PASS: arrows before the first click lock YZ/XZ/XY and toggle back to Auto', flush=True)
 
         # Rectangles after Right/Left/Up start on the box top and lie in
-        # YZ/XZ/XY through that start; only XY keeps the top as its support.
+        # YZ/XZ/XY through that start; only XY lies on the top and divides it.
         count = doc.UndoCount
         cases = ((Qt.Key_Right, 'YZ', V(14, 6, 10), (V(0, 6, 0), V(0, 0, 8))),
                  (Qt.Key_Left, 'XZ', V(6, 14, 10), (V(6, 0, 0), V(0, 0, 8))),
@@ -114,20 +114,25 @@ def run():
             assert abs((anchor - c.plane.origin).dot(c.plane.normal)) < 1e-12
             exact('6, 8')
             assert c.tool is None and c.controls.plane.currentText() == 'Auto'  # The lock ends with the drawing.
-            rectangle = doc.Objects[-1]
+            if name == 'XY':
+                rectangle = next(f for f in box.Shape.Faces if abs(f.Area - 48) < 1e-9)
+                assert box.Shape.isValid() and len(box.Shape.Faces) == 7 and len(doc.Objects) == 4
+            else:
+                rectangle = doc.Objects[-1]
+                assert rectangle.Shape.isValid() and abs(rectangle.Shape.Area - 48) < 1e-9
+                assert 'SC_Support' not in rectangle.PropertiesList, name
+                hide(rectangle)
             expected = [anchor, anchor + u, anchor + u + v, anchor + v]
-            assert rectangle.Shape.isValid() and abs(rectangle.Shape.Area - 48) < 1e-9
             for point in expected:
                 assert min((point - p).Length for p in corners(rectangle)) < 1e-9, (name, point, corners(rectangle))
-            assert ('SC_Support' in rectangle.PropertiesList) == (name == 'XY'), name
-            hide(rectangle)
-        assert doc.UndoCount == count + 3 and len(box.Shape.Faces) == 6
+        assert doc.UndoCount == count + 3
         doc.undo()
-        assert len(doc.Objects) == 4
+        assert len(doc.Objects) == 4 and len(box.Shape.Faces) == 6
         doc.redo()
-        assert len(doc.Objects) == 5
+        assert len(box.Shape.Faces) == 7
+        doc.undo()  # The cases below start on the bare box top again.
         hide(*doc.Objects[2:])
-        print('PASS: Right/Left/Up rectangles lie in YZ/XZ/XY through a start on the box top, one Undo each', flush=True)
+        print('PASS: Right/Left/Up rectangles lie in YZ/XZ/XY through a start on the box top; XY divides it; one Undo each', flush=True)
 
         # A snapped start is a 3D target off every world plane; the lock turns
         # about it. The fixed XY/XZ/YZ selector entries keep the world origin.

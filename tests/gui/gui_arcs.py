@@ -6,7 +6,6 @@ import FreeCAD as App
 import FreeCADGui as Gui
 import Part
 from simplecad import ROOT
-from simplecad.modeling import arcs
 from simplecad.document import operations as op, appearance
 from simplecad.gui.controller import instance
 from simplecad.gui.snapping import screen

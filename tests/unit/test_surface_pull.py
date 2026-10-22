@@ -157,7 +157,8 @@ class SurfacePullDocumentTests(unittest.TestCase):
     def test_cleanup_then_pull_and_undo_both_operations(self):
         # Restore the exact workflow that introduced the user-facing restriction.
         self.doc.removeObject(self.obj.Name)
-        objects = [op.new_shape(self.doc, face, "Triangle") for face in triangles()]
+        for face in triangles():
+            op.new_shape(self.doc, face, "Triangle")
         op.cleanup(self.doc)
         self.assertEqual(len(self.doc.Objects), 1)
         obj = self.doc.Objects[0]

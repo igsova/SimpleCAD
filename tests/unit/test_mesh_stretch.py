@@ -5,9 +5,17 @@ from pathlib import Path
 import FreeCAD as App
 import Mesh
 import Part
+import numpy as np
 from simplecad.mesh import stretch as s
 from simplecad.mesh.conversion import fingerprint
 from test_mesh_transform import box_with_collinear_facet
+
+
+def volume(mesh):
+    """Mesh volume summed in float64; Mesh.Volume sums in float32 and drifts by ~0.03 mm³ here."""
+    points,triangles=mesh.Topology
+    p=np.array([tuple(v) for v in points]); a,b,c=(p[np.array(triangles)[:,i]] for i in range(3))
+    return float(np.einsum('ij,ij->i',a,np.cross(b,c)).sum()/6)
 
 
 class MeshStretchTests(unittest.TestCase):
@@ -61,7 +69,7 @@ class MeshStretchTests(unittest.TestCase):
         mesh=Mesh.Mesh(shape.tessellate(.1))
         result,_=s.stretch(mesh,(0,0,0),(0,0,1),10,25,(0,0,10))
         self.assertTrue(result.isSolid())
-        self.assertAlmostEqual(result.Volume-mesh.Volume,6000,delta=.02)
+        self.assertAlmostEqual(volume(result)-volume(mesh),6000,places=6)
 
     def test_open_sheet_and_shortening_rejection(self):
         mesh=Mesh.Mesh(Part.makePlane(20,30).tessellate(.1))

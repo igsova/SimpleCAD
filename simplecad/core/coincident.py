@@ -3,7 +3,7 @@
 OCC isSame only recognizes shared topology. These comparisons require full
 coincidence, not a shared endpoint, partial overlap, or equal dimensions alone.
 """
-import FreeCAD  # Load the application before its Part extension.
+import FreeCAD  # noqa: F401  Load the application before its Part extension.
 import Part
 import math
 from itertools import product

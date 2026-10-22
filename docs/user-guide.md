@@ -38,7 +38,7 @@ steps, options, keys and a short clip.
 1. Select SimpleCAD and click **Rectangle**. A document is created if needed. Click a first corner in the 3D view, press **Tab**, type `40, 30`, and press **Enter**. Click **Fit All** if the rectangle extends out of view.
 2. Press **P** with the view focused. Click the rectangle, press **Tab**, enter `20`, and press **Enter**. You now have a 40 × 30 × 20 mm solid.
 3. Press **P** again and drag its top face. Release to finish. A short click also starts a click–move–click interaction. **Esc** cancels without changing geometry.
-4. Press **R** and draw a smaller rectangle entirely inside the top face. Press **P**, click that smaller rectangle, and enter `-5` to make a pocket. Positive distances make a boss. A negative distance exactly equal to the thickness makes a through-hole. Going farther extends the profile past the opposite face while keeping that face intact.
+4. Press **R** and draw a smaller rectangle entirely inside the top face. It divides the top face into its own region. Press **P**, click that smaller rectangle, and enter `-5` to make a pocket. Positive distances make a boss. A negative distance exactly equal to the thickness makes a through-hole. Going farther extends the profile past the opposite face while keeping that face intact.
 5. Select the solid, press **C**, click a base point, press **X**, then **Tab**, enter `60`, and press **Enter** to place an independent copy. Try **M** to move it, **Delete** to remove it, and **⌘Z** to undo.
 
 The status bar shows the active inference and live size. Exact inputs accept units: `2 cm`, `1 in`, or `40 mm, 30 mm`. Bare numbers are millimeters. Rectangle dimensions are signed distances along the plane's two axes. While you draw a Rectangle, its width and height are also shown beside its first two sides, outside the rectangle; typing `25, 15` shows each value there as you type it, until you move the pointer or press **Enter**. Line and Move/Copy lengths follow the current direction; move the pointer first or lock X/Y/Z before typing.
@@ -820,7 +820,7 @@ See [Connect SimpleCAD to an AI client](mcp.md) for setup and the tool list.
 | --- | --- | --- |
 | Select | S or Esc | FreeCAD's object, face and edge selection, plus window and crossing boxes |
 | Line | L | Connected segments; follows X/Y/Z axes and snaps; Esc finishes |
-| Rectangle | R | Two corners; creates a filled face |
+| Rectangle | R | Two corners; divides a face or creates a filled face |
 | Circle | O | Center, then radius; divides a face or creates a disk |
 | Arc | A | Center, start, end |
 | 2 Point Arc | H | Two endpoints, then the bulge |
@@ -898,9 +898,9 @@ Snapping includes endpoints, edge midpoints, flat-face centers, circle and hole 
 
 - Direct edits accept standalone plain `Part::Feature` objects. For a parametric Part/Part Design feature, make a **Part → Create a Copy → Simple Copy** first. Objects inside transformed Part containers and Links are rejected.
 - On a solid, Push/Pull extrudes the chosen planar face and fuses outward or cuts inward. This is not a general face-offset engine: side walls of tapered/curved neighboring surfaces are not extended. Results must remain one valid, non-empty solid.
-- A rectangle on a solid is a separate linked profile until Push/Pull consumes it. It does not split the underlying face immediately. It must fit entirely on one face. Support is checked by geometry at commit, rather than a saved Face number. Moving a profile detaches it.
+- A rectangle drawn on a flat face divides that face immediately, as a circle or polygon does. It must fit entirely on one face. Support is checked by geometry at commit, rather than a saved Face number. Rectangles that earlier versions saved as separate linked profiles still push and pull as before; moving one detaches it.
 - Face division combines the new segment with connected loose lines on the same planar surface. Each participating segment must lie entirely on the surface; paths may cross existing divisions. Solids and open surfaces are supported. Only portions that bound closed regions are incorporated; incomplete branches remain loose. Hidden geometry and external loose-line objects with dependents do not participate. Missing-face creation in empty space still supports triangular loops with straight sides.
-- Existing coplanar divisions survive Push/Pull. On divided solids, new coplanar seam edges from an extrusion may also remain visible.
+- Existing coplanar divisions survive Push/Pull. On divided solids, new coplanar seam edges from an extrusion may also remain visible. The outline of the region being pulled does not count: a region drawn flush with an edge pulls out with its side merged into the solid's side.
 - Move/Rotate/Copy act on whole objects even when a face or edge is selected. Copy produces independent geometry. Delete respects edge/face selection; deleting a whole object refuses external dependents. Vertices cannot be erased separately.
 - Edge/face deletion accepts a single solid or an open surface object. Separate compounds containing multiple solids or mixed solid/surface geometry first. Face removal keeps the remaining surfaces and pre-existing loose edges; boundaries used only by removed faces are not retained as loose wires.
 - Snapping scans visible plain Part objects when a tool starts and after each Line segment. Occluded endpoints may be offered; intersection-point, extension-line and tangent snaps are not included. Automatic axis inference uses a small screen-distance/angle band; orbit or use an explicit axis lock when axis projections overlap or point toward the camera.

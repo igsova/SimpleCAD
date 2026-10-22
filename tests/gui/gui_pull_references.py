@@ -7,7 +7,6 @@ from simplecad.document import operations as op
 from simplecad.core import preferences
 from simplecad.gui.controller import instance
 from simplecad.gui.snapping import screen
-from simplecad.gui.qt import QtWidgets
 
 V = App.Vector
 

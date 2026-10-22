@@ -5,7 +5,6 @@ import FreeCAD as App
 import Part
 from simplecad.modeling import forming as f
 from simplecad.document import operations as ops, locking
-from simplecad.core import geometry as g
 V=App.Vector
 
 

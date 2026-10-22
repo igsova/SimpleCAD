@@ -5,7 +5,6 @@ import FreeCAD as App
 import FreeCADGui as Gui
 import Part
 from pivy import coin
-from simplecad import ROOT
 from simplecad.document import operations as op, appearance
 from simplecad.modeling import vertex_edit as ve
 from simplecad.gui.controller import instance

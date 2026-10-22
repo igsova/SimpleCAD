@@ -51,10 +51,16 @@ Run tests with FreeCAD's own Python, which has Part, Mesh and NumPy:
 sh scripts/test_macos.sh                                  # macOS app bundle
 PYTHONPATH=.:<FreeCAD>/lib <FreeCAD>/bin/python -m unittest discover -s tests/unit
 
+# Lint: errors such as undefined names and unused imports (see ruff.toml)
+ruff check .
+
 # GUI suites, each in a fresh FreeCAD window (xvfb-run on headless Linux)
 sh scripts/test_gui.sh gui_smoke gui_line_regions
 FREECAD=/path/to/freecad sh scripts/test_gui.sh          # every suite
 ```
+
+Pull requests run the unit tests and the lint check on Linux. The GUI suites
+are not part of CI, so run the ones your change touches.
 
 Unit tests live in `tests/unit`, GUI suites in `tests/gui` and timing scripts in
 `tests/benchmarks`. Add a unit test for geometry and logic, and a GUI suite when

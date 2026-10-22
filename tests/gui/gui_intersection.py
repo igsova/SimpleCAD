@@ -2,7 +2,6 @@
 import math
 import runpy
 import time
-from pathlib import Path
 import FreeCAD as App
 import FreeCADGui as Gui
 import Part

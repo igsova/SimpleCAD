@@ -6,7 +6,6 @@ import FreeCADGui as Gui
 import Part
 from simplecad import ROOT
 from simplecad.document import operations as ops
-from simplecad.core import geometry as g
 from simplecad.gui.controller import instance
 from simplecad.gui.face_browser import ROLE, alive
 from simplecad.gui.qt import QtCore, QtWidgets

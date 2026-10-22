@@ -146,7 +146,6 @@ def reconstruct(mesh, tolerance, progress):
                        for m in members):
                 members.append(index)
     flat = project_vertices(xyz, memberships, planes, tolerance)
-    moved = np.flatnonzero(np.any(flat != xyz, axis=1))
     # Mesh points are single precision; moving them in the mesh would put
     # them microns off their planes again. Keep exact coordinates here and
     # rebuild each boundary from them.

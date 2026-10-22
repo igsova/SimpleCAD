@@ -108,7 +108,6 @@ class LockTests(unittest.TestCase):
         self.assertEqual(len(self.obj.Shape.Faces),6)
 
     def test_supported_profile_and_slice_cannot_change_locked_host(self):
-        top=self.obj.Shape.Faces[5]
         self.lock()
         profile=ops.new_shape(self.doc,Part.Face(Part.Wire(Part.makeCircle(2,App.Vector(5,5,10)))), 'Circle', support=self.obj)
         with self.assertRaisesRegex(ValueError,'locked'):

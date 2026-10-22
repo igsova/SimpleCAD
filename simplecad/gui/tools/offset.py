@@ -1,5 +1,5 @@
 """Pick a face/edge, move to either side, then click or enter an exact offset."""
-import FreeCAD as App
+import FreeCAD  # noqa: F401  Load the application before its native modules.
 import FreeCADGui as Gui
 import Part
 from ...core import geometry as g

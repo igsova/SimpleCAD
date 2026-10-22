@@ -1401,7 +1401,8 @@ class Controller(QtCore.QObject):
                                                          'Surface '+self.tool.lower(), closed=True)
             results = [result]
         elif self.tool == "Rectangle":
-            result = ops.new_shape(self.doc, geo.rectangle(self.plane, self.anchor, self.point), "Rectangle", self.support)
+            result, face_changed = ops.draw_profile(self.doc, geo.rectangle(self.plane, self.anchor, self.point),
+                                                    self.support, "Rectangle")
             results = [result]
         elif self.tool == "Sphere":
             results = [ops.new_shape(self.doc, geo.sphere(self.anchor,

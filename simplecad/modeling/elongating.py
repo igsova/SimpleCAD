@@ -2,7 +2,7 @@
 import math
 import FreeCAD as App
 import Part
-from ..core import geometry as g, coincident as coinc
+from ..core import geometry as g
 from ..core.geometry import V, Plane, EPS
 
 

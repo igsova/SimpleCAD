@@ -3,7 +3,7 @@ import time
 import FreeCAD as App
 import FreeCADGui as Gui
 from simplecad.document import appearance
-from simplecad.core import coincident, geometry as g
+from simplecad.core import coincident
 from simplecad.gui.controller import instance
 from simplecad.gui.snapping import screen, pick
 V=App.Vector

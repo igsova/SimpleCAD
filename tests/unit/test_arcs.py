@@ -7,7 +7,6 @@ from unittest.mock import patch
 import FreeCAD as App
 import Part
 from simplecad.modeling import arcs
-from simplecad.core import geometry as g
 from simplecad.document import operations as op, locking
 V = App.Vector
 

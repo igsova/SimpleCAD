@@ -1,0 +1,42 @@
+# Runs the unit tests headless with FreeCAD 1.1 from conda-forge.
+# The GUI suites need a FreeCAD window and run locally (scripts/test_gui.sh).
+name: Unit tests
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['docs/**', '**.md']
+  pull_request:
+    paths-ignore: ['docs/**', '**.md']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-name: freecad
+          create-args: freecad=1.1 scipy
+          condarc: |
+            channels: [conda-forge]
+          cache-environment: true
+      - name: Unit tests
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          export PYTHONPATH="$PWD:$CONDA_PREFIX/lib"
+          python -c "import FreeCAD; print('FreeCAD', '.'.join(FreeCAD.Version()[:3]))"
+          python -m unittest discover -s tests/unit
