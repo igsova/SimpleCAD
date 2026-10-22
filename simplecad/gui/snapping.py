@@ -39,6 +39,15 @@ def screen(view, point):
     return tuple(view.getPointOnScreen(point))[:2]
 
 
+def sight(view, point):
+    """Unit direction from the eye through a point, into the scene."""
+    if hasattr(view, "getCameraNode"):
+        direction = V(ray(view, screen(view, point))[1])
+    else:
+        direction = V(view.getViewDirection())
+    return direction / direction.Length
+
+
 def camera_state(view):
     """What screen projection depends on: camera type, pose, zoom and viewport.
 
@@ -683,6 +692,43 @@ class Snapper:
         distance, pairs, _ = edge.distToShape(Part.Vertex(point))
         return V(pairs[0][0]) if pairs else point
 
+    def _covered(self, point, hit):
+        """Whether the face under the pointer hides a snap point behind it.
+
+        A corner on the far side of a part can project right beside the
+        pointer; clicking there means the face in front, not that corner.
+        """
+        if not hit:
+            return False
+        face = hit[1]
+        direction = sight(self.view, point)
+        center, normal = self._face_data(face)
+        if normal is not None:
+            facing = direction.dot(normal)
+            if abs(facing) < 1e-9:
+                return False  # Seen edge-on.
+            # Back along the line of sight to the face's plane.
+            distance = (point - center).dot(normal) / facing
+            if distance <= 1e-4:
+                return False
+            crossing = Part.Vertex(point - direction * distance)
+            region = crossing.BoundBox
+            region.enlarge(1e-6)
+            if not (face.BoundBox.intersect(region) and face.distToShape(crossing)[0] <= 1e-6):
+                return False
+            # A line of sight that only grazes the face's outline passes it:
+            # the point beyond sits on the silhouette, in view.
+            return Part.Compound(face.Wires).distToShape(crossing)[0] > 1e-6
+        # A curved face can also hide its own far side: test the line of
+        # sight, stopping short of the point so a point on the near side of
+        # the face is not covered by the face itself.
+        reach = face.BoundBox.DiagonalLength + (point - face.BoundBox.Center).Length
+        clear = max(1e-3, reach * 1e-6)
+        if reach <= clear:
+            return False
+        line = Part.LineSegment(point - direction * reach, point - direction * clear).toShape()
+        return face.distToShape(line)[0] <= 1e-6
+
     def _visible(self, point, hit, origin, direction):
         """Reject edge points hidden behind the face under the pointer."""
         if not hit:
@@ -891,7 +937,7 @@ class Snapper:
         reach = max(self.settings.center_radius, self.settings.midpoint_radius, self.settings.endpoint_radius)
         candidates = [(distance, priorities.get(label, 3), point, label)
                       for distance, point, label in self.screen_points(pos, reach, plane)
-                      if distance <= self.radius(label)]
+                      if distance <= self.radius(label) and not self._covered(point, hit)]
         if not candidates:
             return []
         nearest = min(candidate[0] for candidate in candidates)
@@ -916,13 +962,13 @@ class Snapper:
 
         return [(point, label) for _, _, point, label in sorted(candidates, key=rank)]
 
-    def endpoint_hint(self, pos, plane=None):
+    def endpoint_hint(self, pos, plane=None, hit=None):
         """The nearest vertex a little beyond capture, to show where to aim."""
         if not self.settings.endpoints:
             return None
         near = [(distance, point) for distance, point, label in
                 self.screen_points(pos, max(ENDPOINT_HINT_RADIUS, self.settings.endpoint_radius), plane)
-                if label == "Endpoint"]
+                if label == "Endpoint" and not self._covered(point, hit)]
         return min(near, key=lambda item: item[0])[1] if near else None
 
     def center_hint(self, pos, plane=None):

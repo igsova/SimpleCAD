@@ -3,6 +3,14 @@
 Notable changes to SimpleCAD. Restart FreeCAD after updating to load new
 commands, and reconnect an MCP client to refresh its tool list.
 
+## Unreleased
+
+### Fixed
+
+- Snapping no longer offers a corner, midpoint or center hidden behind the
+  face under the pointer. A click over such a point used to start the drawing
+  on that hidden point instead of on the face in front.
+
 ## 0.38.1
 
 ### Added

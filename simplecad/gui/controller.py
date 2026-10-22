@@ -1025,10 +1025,11 @@ class Controller(QtCore.QObject):
         snapper = self.base_snapper if self.tool in ("Move", "Copy") and self.anchor is None else self.snapper
         if snapper is None:
             return None
+        hit = pick(self.view, self.doc, pos, face_only=True)
         if self.tool in ("Move", "Copy"):
-            return snapper.endpoint_hint(pos)
+            return snapper.endpoint_hint(pos, hit=hit)
         auto = self.drawing_surface is not None or (self.auto_line if self.anchor is not None else self.free_start())
-        return snapper.endpoint_hint(pos, None if auto else plane)
+        return snapper.endpoint_hint(pos, None if auto else plane, hit)
 
     def show_endpoint(self, pos, snap, plane):
         endpoint = self.endpoint_hint(pos, snap, plane) if pos is not None else None
