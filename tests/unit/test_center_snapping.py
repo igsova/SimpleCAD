@@ -17,8 +17,9 @@ def source(shape, name="Shape", visible=True, type_id="Part::Feature", parents=(
                            ViewObject=SimpleNamespace(Visibility=visible))
 
 
-def snapshot(*objects, exclude=(), project=None):
-    view = SimpleNamespace(getPointOnScreen=project or (lambda point: (point.x * 10, point.y * 10)))
+def snapshot(*objects, exclude=(), project=None, direction=(0, 0, -1)):
+    view = SimpleNamespace(getPointOnScreen=project or (lambda point: (point.x * 10, point.y * 10)),
+                           getViewDirection=lambda: direction)
     return Snapper(SimpleNamespace(Objects=objects), view, exclude)
 
 
@@ -150,8 +151,9 @@ class CenterSnappingTests(unittest.TestCase):
         self.assertEqual([label for _, label in snapper.nearby_points((200, 150))], ["Endpoint", "Midpoint", "Face center"])
         self.assertEqual(snapper.nearby_points((241, 150)), [])
         front = Part.makePlane(40, 30, V(0, 0, 10))
-        snapper.points = [(V(20, 15, 0), "Endpoint"), (V(21, 15, 10), "Face center")]
-        # Native face ownership is only a tiebreak within two pixels.
+        snapper.points = [(V(20, 15, 20), "Endpoint"), (V(21, 15, 10), "Face center")]
+        # Native face ownership is only a tiebreak within two pixels. (The
+        # endpoint is in front of the face: one behind it would be hidden.)
         nearby = snapper.nearby_points((200, 150), hit=(None, front, front.CenterOfMass, "Face1"))
         self.assertEqual(nearby[0][1], "Endpoint")
 

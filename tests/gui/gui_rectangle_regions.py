@@ -85,6 +85,23 @@ def run():
         assert len(doc.Objects) == 1 and len(box.Shape.Faces) == 7
         assert len(regions(anchor, anchor + V(12, 6, 0))) == 1, [f.Area for f in box.Shape.Faces]
         print('PASS: Tab size on the box top divides it into exactly that rectangle', flush=True)
+
+        # Across that region: both regions are divided, and the overlap is
+        # a region of its own.
+        first = V(16, 5, 20)
+        c.start('Rectangle')
+        c.motion(pos(first))
+        c.click(pos(first))
+        assert c.support == box, c.support
+        overlap = V(c.anchor)
+        c.motion(pos(V(30, 20, 20)))
+        c.click(pos(V(30, 20, 20)))
+        assert c.tool is None
+        assert len(doc.Objects) == 1 and len(box.Shape.Faces) == 9, [f.Area for f in box.Shape.Faces]
+        expected = (anchor.x + 12 - overlap.x) * (anchor.y + 6 - overlap.y)
+        assert any(abs(f.Area - expected) < 1e-6 for f in box.Shape.Faces), (expected, [f.Area for f in box.Shape.Faces])
+        assert box.Shape.isValid() and abs(box.Shape.Volume - 24000) < 1e-6
+        print('PASS: a rectangle across an earlier one divides both regions', flush=True)
     finally:
         c.cancel(quiet=True)
         c.controls.plane.setCurrentText(old[0])
