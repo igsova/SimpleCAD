@@ -5,6 +5,7 @@ import FreeCAD as App
 import FreeCADGui as Gui
 import Part
 from pivy import coin
+from simplecad.core import geometry as g
 from simplecad.document import operations as op, appearance
 from simplecad.modeling import vertex_edit as ve
 from simplecad.gui.controller import instance
@@ -74,4 +75,15 @@ def run(screenshot=None):
     # A single signed numeric distance on X works without mouse displacement.
     Gui.Selection.clearSelection();Gui.Selection.addSelection(obj,name);c.start('VertexMove');key('X');enter('2')
     assert c.tool is None and any(ve.same(v.Point,corner+V(2,0,0)) for v in obj.Shape.Vertexes)
+    # A circle drawn on the top does not block its corner; the circle stays exact.
+    obj.Shape=g.divide_face_with_profile(Part.makeBox(20,20,20),g.circle(g.Plane.named('XY',V(0,0,20)),V(10,10,20),4))
+    view.fitAll();Gui.updateGui()
+    name=next('Vertex'+str(i) for i,v in enumerate(obj.Shape.Vertexes,1) if ve.same(v.Point,corner))
+    hit=pick(view,doc,pos(corner),prefer_boundary=True);assert hit and hit[3]==name,hit
+    before=doc.UndoCount
+    Gui.Selection.clearSelection();Gui.Selection.addSelection(obj,name);c.start('VertexMove');key('Z');enter('-4')
+    assert c.tool is None and doc.UndoCount==before+1
+    assert any(ve.same(v.Point,corner+V(0,0,-4)) for v in obj.Shape.Vertexes)
+    assert obj.Shape.isValid() and obj.Shape.isClosed()
+    assert any(isinstance(e.Curve,Part.Circle) and abs(e.Curve.Radius-4)<1e-9 for e in obj.Shape.Edges)
     return {'result':'PASS','preview_ms':round(preview_ms,2),'commit_ms':round(commit_ms,1)}

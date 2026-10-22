@@ -363,9 +363,9 @@ Press **V** or choose **Move Vertex**, then click and drag a corner. Release to 
 - With an axis locked, type one signed distance, such as `-3 mm`. Without a lock, one distance follows the current drag direction.
 - Unconstrained dragging uses a plane facing the view. The plane selector can instead start movement on XY, XZ, or YZ. Existing endpoint/midpoint/center and axis inference settings apply to destination snapping. A destination clicked on a face lies exactly on that face.
 
-The tool changes the selected object's vertex and every adjoining flat, straight-edged face. Faces that remain flat stay whole; bent faces become connected triangles. Colors and opacity follow those regions, locked adjoining faces block the move, and one Undo restores the geometry and appearance together. Other objects remain independent even where they touch.
+The tool changes the selected object's vertex and every adjoining flat face. Faces that remain flat stay whole; bent faces become connected triangles. A face with a circle or other curve drawn on it keeps that curve exactly: when it bends, only its corner folds off, along straight lines clear of the curves, and the rest stays flat. If no such fold fits, that move is refused. Colors and opacity follow those regions, locked adjoining faces block the move, and one Undo restores the geometry and appearance together. Other objects remain independent even where they touch.
 
-Curved faces or curved boundaries at the edited neighborhood are not supported yet. Separate internal cavity shells, mixed solid/surface objects, and dependent parametric features require a simpler source. Collapsed, folded, or self-intersecting results are rejected without keeping the edit.
+Curved faces, and curved edges meeting at the vertex, are not supported yet. Separate internal cavity shells, mixed solid/surface objects, and dependent parametric features require a simpler source. Collapsed, folded, or self-intersecting results are rejected without keeping the edit.
 
 ### Bend / Soft Deform
 

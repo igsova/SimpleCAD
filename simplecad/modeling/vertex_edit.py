@@ -10,6 +10,49 @@ V=App.Vector
 def same(a,b): return (a-b).Length <= g.EPS
 
 
+def rewired(face, point, chain):
+    """face with its two edges at point replaced by straight lines along chain.
+
+    Every other edge, curved ones included, is kept exactly, so a circle drawn
+    on the face still matches the region inside it.
+    """
+    wires=[]
+    for wire in face.Wires:
+        kept=[e for e in wire.Edges if not any(same(v.Point,point) for v in e.Vertexes)]
+        if len(kept)==len(wire.Edges):
+            wires.append(wire);continue
+        lines=[g.line(a,b) for a,b in zip(chain,chain[1:])]
+        wires.append(Part.Wire(Part.sortEdges(kept+lines)[0]))
+    return Part.Face(wires,'Part::FaceMakerBullseye')
+
+
+def fold(face, point, ends, normal):
+    """(chain, triangles) that tilt the corner at point off a face with curves.
+
+    The corner is cut off along straight lines that stay clear of the face's
+    other edges: the diagonal between its neighbors, or else a dart towards
+    it. The rest of the face keeps its plane and its curved edges. None when
+    no such cut fits inside the face.
+    """
+    a,b=ends
+    middle=(a+b)/2
+    for chain in [[a,b]]+[[a,point+(middle-point)*t,b] for t in (.75,.5,.3,.15)]:
+        triangles=[[point,p,q] for p,q in zip(chain,chain[1:])]
+        if any((t[1]-t[0]).cross(t[2]-t[0]).Length<=g.EPS for t in triangles): continue
+        for t in triangles:
+            if (t[1]-t[0]).cross(t[2]-t[0]).dot(normal)<0: t.reverse()
+        try:
+            cut=Part.Face(Part.makePolygon([point]+chain+[point]))
+            rest=rewired(face,point,chain)
+        except Exception:
+            continue
+        tolerance=max(1e-6,face.Area*1e-7)
+        if (cut.Area>g.EPS and abs(face.common(cut).Area-cut.Area)<=tolerance and rest.isValid()
+                and abs(rest.Area+cut.Area-face.Area)<=tolerance):
+            return chain,triangles
+    return None
+
+
 class Neighborhood:
     def __init__(self, shape, name):
         match=re.fullmatch(r'Vertex([1-9][0-9]*)',name)
@@ -24,6 +67,8 @@ class Neighborhood:
         self.shape=shape
         self.point=V(shape.Vertexes[int(match[1])-1].Point)
         self.faces={}
+        # Faces with curved edges away from the vertex: (neighbors, fold).
+        self.curved={}
         self.lines=[]
         for edge in shape.Edges:
             if not any(same(v.Point,self.point) for v in edge.Vertexes): continue
@@ -33,9 +78,21 @@ class Neighborhood:
                 raise ValueError('Move Vertex supports straight edges and flat faces; curved vertices cannot be moved yet.')
         for index,face in enumerate(shape.Faces):
             if not any(same(v.Point,self.point) for v in face.Vertexes): continue
-            normal=g.face_normal(face)
             if any(e.Degenerated or not isinstance(e.Curve,Part.Line) for e in face.Edges):
-                raise ValueError('The touching faces must have straight boundaries for Move Vertex.')
+                # A circle or curve drawn on a flat face does not touch the
+                # vertex: keep it exactly instead of triangulating it.
+                if not isinstance(face.Surface,Part.Plane):
+                    raise ValueError('The touching faces must have straight boundaries for Move Vertex.')
+                normal=g.face_normal(face)
+                ends=[V(v.Point) for e in face.Edges if any(same(v.Point,self.point) for v in e.Vertexes)
+                      for v in e.Vertexes if not same(v.Point,self.point)]
+                if len(ends)!=2:
+                    raise ValueError('This face could not be triangulated at the selected vertex.')
+                folded=fold(face,self.point,ends,normal)
+                self.curved[index]=(ends,folded)
+                self.faces[index]=(None,folded[1] if folded else [],normal)
+                continue
+            normal=g.face_normal(face)
             loops=[[V(v.Point) for v in wire.OrderedVertexes] for wire in face.Wires]
             points,triangles=face.tessellate(.1)
             triangles=[[V(points[i]) for i in tri] for tri in triangles]
@@ -63,6 +120,29 @@ class Neighborhood:
         lines.extend([[self.shifted(p,delta) for p in line] for line in self.lines])
         return lines
 
+    def bend(self, face, index, delta):
+        """A face with curved edges: moved within its plane, or folded."""
+        ends,folded=self.curved[index]
+        normal=self.faces[index][2]
+        destination=self.point+delta
+        if abs(delta.dot(normal))<=g.EPS:
+            replacements=[rewired(face,self.point,[ends[0],destination,ends[1]])]
+        elif folded is None:
+            raise ValueError('That move would tilt a face with curved edges, and no straight fold there stays clear of '
+                             'them. Move the vertex within that face instead.')
+        else:
+            chain,triangles=folded
+            replacements=[rewired(face,self.point,chain)]
+            for tri in triangles:
+                pts=[self.shifted(p,delta) for p in tri]
+                cross=(pts[1]-pts[0]).cross(pts[2]-pts[0])
+                if cross.Length<g.EPS or cross.dot(normal)<=g.EPS:
+                    raise ValueError('That move folds or collapses a face. Choose a smaller displacement.')
+                replacements.append(Part.Face(Part.makePolygon(pts+pts[:1])))
+        if g.face_normal(replacements[0]).dot(normal)<0: replacements[0].reverse()
+        for replacement in replacements: g.validate(replacement)
+        return replacements
+
     def build(self, delta):
         delta=V(delta)
         if not all(math.isfinite(x) for x in (delta.x,delta.y,delta.z)) or delta.Length<g.EPS:
@@ -74,6 +154,10 @@ class Neighborhood:
         for index,face in enumerate(self.shape.Faces):
             if index not in self.faces:
                 faces.append(face);sources.append(index);continue
+            if index in self.curved:
+                replacements=self.bend(face,index,delta)
+                faces.extend(replacements);sources.extend([index]*len(replacements))
+                continue
             loops,triangles,normal=self.faces[index]
             moved=[[self.shifted(p,delta) for p in loop] for loop in loops]
             all_points=[p for loop in moved for p in loop]
