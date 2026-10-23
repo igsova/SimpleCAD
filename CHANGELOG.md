@@ -11,6 +11,10 @@ commands, and reconnect an MCP client to refresh its tool list.
   drawn on it. It used to refuse with "The touching faces must have straight
   boundaries for Move Vertex." The curve is kept exactly: within the face's
   plane the face stays whole, and a tilt folds off only the corner.
+- Undo followed at once by another edit no longer crashes FreeCAD. SimpleCAD's
+  seam and hidden-face masks, face colours and highlights could still read the
+  undone object's display after FreeCAD had deleted it. On Windows FreeCAD
+  reports such a crash as "Access violation".
 
 ## 0.38.2
 

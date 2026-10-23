@@ -77,6 +77,10 @@ def mask_faces(values, counts, hidden):
 
 class EdgeMask:
     def __init__(self, node, changed):
+        # A node found below an object's root is only borrowed: an Undo
+        # followed by a new edit can delete the object's view provider before
+        # the next refresh closes this mask.
+        node.ref()
         self.node = node
         self.original = None
         self.filtered = None
@@ -101,9 +105,13 @@ class EdgeMask:
             self.write(filtered)
 
     def close(self):
+        if self.node is None:
+            return
         if self.original is not None and tuple(self.node.coordIndex.getValues()) == self.filtered:
             self.write(self.original)
         self.sensor.detach()
+        self.node.unref()
+        self.node = None
 
 
 class FaceMask(EdgeMask):
@@ -138,6 +146,8 @@ class PointMask:
                         point.startIndex = start+index
                         point.numPoints = 1
                         replacement.addChild(point)
+                # Borrowed nodes, as for EdgeMask.
+                parent.ref(); node.ref()
                 self.entries.append((parent, node, replacement))
                 parent.replaceChild(i, replacement)
         visit(root)
@@ -146,6 +156,7 @@ class PointMask:
         for parent, node, replacement in self.entries:
             index = parent.findChild(replacement)
             if index >= 0: parent.replaceChild(index, node)
+            node.unref(); parent.unref()
         self.entries.clear()
 
 
