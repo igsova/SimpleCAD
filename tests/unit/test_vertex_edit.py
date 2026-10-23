@@ -78,6 +78,52 @@ class VertexEditTests(unittest.TestCase):
         curved=[f for f in shape.Faces if isinstance(f.Surface,Part.Sphere)]
         self.assertTrue(all(any(coincident.same(f,r) for r in result.Faces) for f in curved))
 
+    def drawn_top(self, radius=6):
+        """A 40 x 30 x 20 block with a rectangle and a circle drawn across it on top."""
+        top=g.Plane.named('XY',V(0,0,20))
+        shape=g.divide_face_with_profile(Part.makeBox(40,30,20),g.rectangle(top,V(10,8,20),V(24,20,20)))
+        return g.divide_face_with_profile(shape,g.circle(top,V(20,15,20),radius))
+
+    def corner(self, shape, point):
+        return next('Vertex'+str(i) for i,v in enumerate(shape.Vertexes,1) if ve.same(v.Point,point))
+
+    def test_corner_of_a_face_with_a_drawn_circle_moves(self):
+        shape=self.drawn_top();corner=V(40,0,20)
+        circles=[f for f in shape.Faces if any(isinstance(e.Curve,Part.Circle) for e in f.Edges)
+                 and all(not ve.same(v.Point,corner) for v in f.Vertexes)]
+        n=ve.Neighborhood(shape,self.corner(shape,corner))
+        self.assertEqual(len(n.curved),1)
+        # Down, up, within the top, and off it at an angle.
+        for d in (V(0,0,-5),V(0,0,5),V(2,-3,0),V(-4,3,0),V(2,-3,4)):
+            with self.subTest(d=d):
+                result,origins=n.build(d)
+                self.assertTrue(result.isValid() and result.isClosed())
+                self.assertEqual(result.ShapeType,'Solid');self.assertEqual(len(origins),len(result.Faces))
+                self.assertTrue(any(ve.same(v.Point,corner+d) for v in result.Vertexes))
+                # The drawn regions, the circle included, are untouched.
+                for face in circles:
+                    self.assertTrue(any(coincident.same(face,r) for r in result.Faces))
+        # Within the top, the top stays one face with the exact circle in it.
+        result,_=n.build(V(2,-3,0))
+        tops=[f for f in result.Faces if abs(f.CenterOfMass.z-20)<1e-9 and abs(g.face_normal(f).z)>.999999]
+        self.assertEqual(len(tops),len([f for f in shape.Faces if abs(f.CenterOfMass.z-20)<1e-9]))
+
+    def test_tilt_with_no_fold_clear_of_the_curves_is_refused(self):
+        # The circle nearly fills the top: no straight fold clears it.
+        shape=self.box()
+        shape=g.divide_face_with_profile(shape,g.circle(g.Plane.named('XY',V(0,0,10)),V(5,5,10),4.95))
+        n=ve.Neighborhood(shape,self.corner(shape,V(10,0,10)))
+        with self.assertRaisesRegex(ValueError,'curved edges'):n.build(V(0,0,-1))
+        result,_=n.build(V(1,-1,0))
+        self.assertTrue(result.isValid() and result.isClosed())
+
+    def test_document_move_with_a_drawn_circle_is_one_undo_step(self):
+        doc,obj=self.document();obj.Shape=self.drawn_top();before=doc.UndoCount
+        name=self.corner(obj.Shape,V(40,0,20));volume=obj.Shape.Volume
+        op.move_vertex(obj,name,V(0,0,-5))
+        self.assertEqual(doc.UndoCount,before+1);self.assertLess(obj.Shape.Volume,volume)
+        doc.undo();self.assertAlmostEqual(obj.Shape.Volume,volume)
+
     def test_rejects_invalid_moves_and_names(self):
         shape=self.box();n=ve.Neighborhood(shape,'Vertex1')
         for d in (V(),V(float('nan'),0,0),V(10,10,-10),V(0,0,-30)):

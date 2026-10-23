@@ -79,6 +79,10 @@ class Surface:
             self.dirty = True
             changed()
         for parent, native, source in face_parts(root):
+            # Nodes found below the root are only borrowed; an Undo can delete
+            # the object's view provider before this surface is closed.
+            for node in (parent, native, source):
+                node.ref()
             visual = coin.SoSeparator()
             visual.setName('SimpleCADSurface')
             visual.renderCaching = coin.SoSeparator.OFF
@@ -198,10 +202,12 @@ class Surface:
         for sensor in self.sensors:
             sensor.detach()
         self.sensors.clear()
-        for parent, _, _, visual, invisible, filled, _, _ in self.entries:
+        for parent, native, source, visual, invisible, filled, _, _ in self.entries:
             for node in (visual, invisible, filled):
                 if parent.findChild(node) >= 0:
                     parent.removeChild(node)
+            for node in (parent, native, source):
+                node.unref()
         self.entries.clear()
 
 

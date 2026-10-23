@@ -527,6 +527,7 @@ class FaceRecolour:
     preview writes them, since a dense part can have one per face.
     """
     def __init__(self, node, changed, single=False):
+        node.ref()  # borrowed from a view provider, which an Undo can delete first
         self.node, self.single = node, single
         self.ours = None
         self.native = {}  # index: FreeCAD's colour drawn as ours
@@ -577,12 +578,18 @@ class FaceRecolour:
                 self.write(restored)
         self.native, self.ours, self.dirty = {}, None, True
         if detach:
-            self.sensor.detach()
+            self.detach()
+
+    def detach(self):
+        """Stop following the material and let go of it."""
+        self.sensor.detach()
+        self.node.unref()
 
 
 class Recolour:
     """Display-only colour of one native line or point material."""
     def __init__(self, node, changed):
+        node.ref()  # borrowed from a view provider, which an Undo can delete first
         self.node = node
         self.ours = self.native = None
         self.sensor = coin.SoFieldSensor(lambda *unused: changed(), None)
@@ -614,7 +621,12 @@ class Recolour:
             self.write(native or self.native)
         self.ours = None
         if detach:
-            self.sensor.detach()
+            self.detach()
+
+    def detach(self):
+        """Stop following the material and let go of it."""
+        self.sensor.detach()
+        self.node.unref()
 
 
 def write_indices(field, values):
@@ -873,7 +885,7 @@ class ViewportStyle(QtCore.QObject):
         for key in [key for key in self.styled if key[0] == doc.Name]:
             _, lines, points, faces, highlights = self.styled.pop(key)
             for recolour in lines + points + faces:
-                recolour.sensor.detach()
+                recolour.detach()
             for highlight in highlights or ():
                 highlight.close()
         self.faces = {key: known for key, known in self.faces.items() if key[0] != doc.Name}

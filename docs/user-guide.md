@@ -35,7 +35,7 @@ steps, options, keys and a short clip.
 
 ### First five minutes
 
-1. Select SimpleCAD and click **Rectangle**. A document is created if needed. Click a first corner in the 3D view, press **Tab**, type `40, 30`, and press **Enter**. Click **Fit All** if the rectangle extends out of view.
+1. Switch to the SimpleCAD workbench (pick **SimpleCAD** in the workbench list on the toolbar, or choose **View → Workbench → SimpleCAD**) and click **Rectangle**. A document is created if needed. Click a first corner in the 3D view, press **Tab**, type `40, 30`, and press **Enter**. Click **Fit All** if the rectangle extends out of view.
 2. Press **P** with the view focused. Click the rectangle, press **Tab**, enter `20`, and press **Enter**. You now have a 40 × 30 × 20 mm solid.
 3. Press **P** again and drag its top face. Release to finish. A short click also starts a click–move–click interaction. **Esc** cancels without changing geometry.
 4. Press **R** and draw a smaller rectangle entirely inside the top face. It divides the top face into its own region. Press **P**, click that smaller rectangle, and enter `-5` to make a pocket. Positive distances make a boss. A negative distance exactly equal to the thickness makes a through-hole. Going farther extends the profile past the opposite face while keeping that face intact.
@@ -363,9 +363,9 @@ Press **V** or choose **Move Vertex**, then click and drag a corner. Release to 
 - With an axis locked, type one signed distance, such as `-3 mm`. Without a lock, one distance follows the current drag direction.
 - Unconstrained dragging uses a plane facing the view. The plane selector can instead start movement on XY, XZ, or YZ. Existing endpoint/midpoint/center and axis inference settings apply to destination snapping. A destination clicked on a face lies exactly on that face.
 
-The tool changes the selected object's vertex and every adjoining flat, straight-edged face. Faces that remain flat stay whole; bent faces become connected triangles. Colors and opacity follow those regions, locked adjoining faces block the move, and one Undo restores the geometry and appearance together. Other objects remain independent even where they touch.
+The tool changes the selected object's vertex and every adjoining flat face. Faces that remain flat stay whole; bent faces become connected triangles. A face with a circle or other curve drawn on it keeps that curve exactly: when it bends, only its corner folds off, along straight lines clear of the curves, and the rest stays flat. If no such fold fits, that move is refused. Colors and opacity follow those regions, locked adjoining faces block the move, and one Undo restores the geometry and appearance together. Other objects remain independent even where they touch.
 
-Curved faces or curved boundaries at the edited neighborhood are not supported yet. Separate internal cavity shells, mixed solid/surface objects, and dependent parametric features require a simpler source. Collapsed, folded, or self-intersecting results are rejected without keeping the edit.
+Curved faces, and curved edges meeting at the vertex, are not supported yet. Separate internal cavity shells, mixed solid/surface objects, and dependent parametric features require a simpler source. Collapsed, folded, or self-intersecting results are rejected without keeping the edit.
 
 ### Bend / Soft Deform
 

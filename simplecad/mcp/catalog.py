@@ -131,7 +131,7 @@ tool('elongate', 'Elongate a circular hole rim, cylindrical hole, or flat face i
      {'object': NAME, 'element': text(pattern=r'^(Face|Edge)[1-9][0-9]*$'), 'distance': number(), 'direction': VEC, 'mode': enum('ellipse','slot'), 'cut_hole': BOOL, 'symmetric': BOOL}, ('object','element','distance','direction'), edit=True)
 tool('push_pull', 'Push/pull one flat face by signed mm along its resolved normal. Exact opposite-face contact makes a hole; extending farther preserves the opposite face.',
      {'object': NAME, 'face': FACE, 'distance': number()}, ('object','face','distance'), edit=True)
-tool('move_vertex', 'Move one vertex by world-space delta [dx,dy,dz] in mm, deforming adjoining flat, straight-edged faces. Bent faces become triangles. Rejects curved neighborhoods, collapsed/folded or invalid results, locks and dependent features. Re-inspect face/vertex names afterward.',
+tool('move_vertex', 'Move one vertex by world-space delta [dx,dy,dz] in mm, deforming adjoining flat faces. Bent faces become triangles; curves drawn on them stay exact and only the corner folds. Rejects curved faces or edges at the vertex, collapsed/folded or invalid results, locks and dependent features. Re-inspect face/vertex names afterward.',
      {'object': NAME, 'vertex': text(pattern=r'^Vertex[1-9][0-9]*$'), 'delta': VEC}, ('object','vertex','delta'), edit=True)
 for name in ('move','copy'):
     tool(name, ('Move whole objects' if name=='move' else 'Create independent copies of whole objects')+' by a world-space displacement in mm.',

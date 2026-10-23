@@ -60,7 +60,9 @@ https://github.com/user-attachments/assets/3ee6a401-5bb9-443b-8c6b-4076e62b04a1
 2. Under **Custom repositories**, add `https://github.com/igsova/SimpleCAD`
    with branch `main`.
 3. Open **Tools → Addon manager**, find **SimpleCAD** and install it.
-4. Restart FreeCAD and choose **SimpleCAD** in the workbench selector.
+4. Restart FreeCAD, then switch to the SimpleCAD workbench: pick **SimpleCAD**
+   in the workbench list on the toolbar (it shows the current workbench, such
+   as **Part Design**), or choose **View → Workbench → SimpleCAD**.
 
 ### Manual
 
@@ -87,9 +89,9 @@ folder and links the clone there. Add `--copy` for an independent copy, or
 
 ## Quick start
 
-1. Choose **SimpleCAD** and click **Rectangle** (or press **R** with the 3D
-   view focused). Click a corner, press **Tab**, type `40, 30` and press
-   **Enter**.
+1. Switch to the **SimpleCAD** workbench (see Install above) and click
+   **Rectangle** (or press **R** with the 3D view focused). Click a corner,
+   press **Tab**, type `40, 30` and press **Enter**.
 2. Press **P** (Push/Pull), click the rectangle, press **Tab**, type `20` and
    press **Enter**. You now have a 40 × 30 × 20 mm block.
 3. Press **L** (Line), click the midpoint of one top edge, then the midpoint

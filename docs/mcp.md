@@ -223,7 +223,7 @@ Push/Pull cursor reference snapping is configured through the existing `pull_fac
 
 When `push_pull` disconnects a wedge or bridge, every remaining valid solid is kept as a separate object. Its response retains `object` for the primary result and includes `objects` for all resulting owners (including any open-surface remainder). The largest solid keeps the original identity. Use these returned names and the new revision for subsequent edits; one Undo restores the entire cut.
 
-`simplecad_move_vertex` takes `document`, `expected_revision`, `object`, `vertex` (for example `Vertex3`) and `delta` (for example `[5, 0, -2]`). Inspect vertices first and use the current revision. It returns the edited `object` and a new revision; re-inspect elements afterward because face and vertex numbers can change. It shares the GUI's planar/straight-boundary restrictions, lock checks, triangulation, material inheritance and Undo transaction. Restart the FreeCAD server and reconnect the client after updating to discover the tool.
+`simplecad_move_vertex` takes `document`, `expected_revision`, `object`, `vertex` (for example `Vertex3`) and `delta` (for example `[5, 0, -2]`). Inspect vertices first and use the current revision. It returns the edited `object` and a new revision; re-inspect elements afterward because face and vertex numbers can change. It shares the GUI's restrictions (flat faces, straight edges at the vertex), curve-preserving folds, lock checks, triangulation, material inheritance and Undo transaction. Restart the FreeCAD server and reconnect the client after updating to discover the tool.
 
 ## Scale, Loft and Sweep
 

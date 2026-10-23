@@ -408,7 +408,7 @@ Move Vertex drags one corner of a part and reshapes the flat faces around it. Fa
 
 **Notes**
 
-- Only flat, straight-edged faces can be next to the vertex. Curved faces or curved edges there are not supported yet.
+- The faces next to the vertex must be flat, and the edges meeting at it straight. A circle or other curve drawn elsewhere on one of those faces is kept exactly: moving the vertex within that face keeps it one face, and tilting it folds off only the corner, along straight lines clear of the curves. When no such fold fits, the tilt is refused; move the vertex within the face instead.
 - Collapsed, folded or self-intersecting results are refused and the part is unchanged.
 - Locked adjoining faces block the move. Colors follow the reshaped regions.
 - Other objects stay independent, even where they touch. One Undo restores the geometry and colors.
