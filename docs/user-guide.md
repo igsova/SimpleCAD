@@ -35,7 +35,7 @@ steps, options, keys and a short clip.
 
 ### First five minutes
 
-1. Select SimpleCAD and click **Rectangle**. A document is created if needed. Click a first corner in the 3D view, press **Tab**, type `40, 30`, and press **Enter**. Click **Fit All** if the rectangle extends out of view.
+1. Switch to the SimpleCAD workbench (pick **SimpleCAD** in the workbench list on the toolbar, or choose **View → Workbench → SimpleCAD**) and click **Rectangle**. A document is created if needed. Click a first corner in the 3D view, press **Tab**, type `40, 30`, and press **Enter**. Click **Fit All** if the rectangle extends out of view.
 2. Press **P** with the view focused. Click the rectangle, press **Tab**, enter `20`, and press **Enter**. You now have a 40 × 30 × 20 mm solid.
 3. Press **P** again and drag its top face. Release to finish. A short click also starts a click–move–click interaction. **Esc** cancels without changing geometry.
 4. Press **R** and draw a smaller rectangle entirely inside the top face. It divides the top face into its own region. Press **P**, click that smaller rectangle, and enter `-5` to make a pocket. Positive distances make a boss. A negative distance exactly equal to the thickness makes a through-hole. Going farther extends the profile past the opposite face while keeping that face intact.

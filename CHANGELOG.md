@@ -16,6 +16,11 @@ commands, and reconnect an MCP client to refresh its tool list.
   undone object's display after FreeCAD had deleted it. On Windows FreeCAD
   reports such a crash as "Access violation".
 
+### Changed
+
+- The README and user guide say where to switch to the SimpleCAD workbench:
+  the workbench list on the toolbar, or **View → Workbench → SimpleCAD**.
+
 ## 0.38.2
 
 ### Fixed
