@@ -327,7 +327,7 @@ class ModelAPI:
             from ..jobs import mesh as mesh_jobs
             if operation == 'convert_mesh':
                 job = mesh_jobs.start(self.object(doc, a['object']), a.get('tolerance', preferences.precision()), a.get('simplify', 0),
-                                      a.get('surfaces', False))
+                                      a.get('surfaces', preferences.smooth_surfaces()))
             else:
                 job = mesh_jobs.get(doc, a['job_id'])
                 if job.operation != 'convert': raise ValueError('This is not a mesh conversion job.')

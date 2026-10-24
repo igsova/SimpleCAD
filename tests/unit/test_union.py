@@ -107,6 +107,17 @@ class UnionGeometryTests(unittest.TestCase):
         self.assertTrue(any(abs(r-2) < 1e-6 for r in radii))
         self.assertTrue(any(abs(r-3) < 1e-6 for r in radii))
 
+    def test_block_tangent_to_a_round_boss_joins(self):
+        # The block ends at the boss's centre, so its long sides are tangent
+        # to the boss; so are a half-round end's flat sides to a slot's.
+        for block, boss in ((Part.makeBox(60, 70, 60, V(-60, -35, 0)), Part.makeCylinder(35, 60)),
+                            (Part.makeBox(80, 60, 60, V(-80, -30, 0)), Part.makeCylinder(30, 60))):
+            exact = block.fuse(boss)
+            result = union.combine([block, boss])
+            self.assert_solid(result)
+            self.assertAlmostEqual(result.Volume, exact.Volume, delta=1e-3)
+            self.assertEqual(len(result.Faces), 6)
+
     def test_rotated_reversed_closed_shell_and_nested_compound(self):
         transform = App.Placement(V(30, -20, 7), App.Rotation(V(1, 2, 3), 38))
         a, b = Part.makeBox(10, 10, 10), Part.makeBox(10, 10, 10, V(5, 0, 0))

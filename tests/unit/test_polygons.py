@@ -109,13 +109,18 @@ class PolygonDocumentTests(unittest.TestCase):
         self.assertEqual(len(host.Shape.Wires), 2)
         self.doc.undo(); self.assertEqual(len(host.Shape.Faces), 2)
 
-    def test_partial_profile_or_existing_hole_rejected_without_overlay(self):
+    def test_partial_polygon_divides_the_sheet_and_existing_hole_is_rejected(self):
         host = op.new_shape(self.doc, Part.makePlane(40, 30), "Sheet")
-        plane = g.Plane.named()
-        bad = g.polygon(plane, V(39, 15, 0), V(44, 15, 0), 5)
+        partial = g.polygon(g.Plane.named(), V(39, 15, 0), V(44, 15, 0), 5)
         count = self.doc.UndoCount
-        with self.assertRaises(ValueError): op.draw_polygon(self.doc, bad, host)
-        self.assertEqual(self.doc.UndoCount, count); self.assertEqual(len(self.doc.Objects), 1)
+        self.assertEqual(op.draw_polygon(self.doc, partial, host), (host, True))
+        self.assertEqual(self.doc.UndoCount, count + 1); self.assertEqual(len(self.doc.Objects), 1)
+        # The part on the sheet divides it; the part off it joins the sheet.
+        inside = partial.common(Part.makePlane(40, 30)).Area
+        areas = sorted(f.Area for f in host.Shape.Faces)
+        for area, expected in zip(areas, sorted([1200 - inside, inside, partial.Area - inside]), strict=True):
+            self.assertAlmostEqual(area, expected, places=5)
+        self.doc.undo(); self.assertEqual(len(host.Shape.Faces), 1)
         hole = profile(host.Shape)
         host.Shape = host.Shape.cut(hole)
         with self.assertRaises(ValueError): op.draw_polygon(self.doc, hole, host)

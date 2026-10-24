@@ -84,13 +84,19 @@ class RectangleRegionTests(unittest.TestCase):
         self.assertAlmostEqual(self.box.Shape.Volume, 24500)
         self.region(second)
 
-    def test_rectangle_off_the_face_changes_nothing(self):
+    def test_rectangle_past_the_face_edge_divides_it_and_adds_the_rest(self):
+        # As in SketchUp: the top is divided where the rectangle overlaps it,
+        # and the part beyond the box's edge becomes a face of its own.
         count = self.doc.UndoCount
-        with self.assertRaises(ValueError):
-            self.draw(V(30, 10, 20), V(50, 20, 20))
-        self.assertEqual(len(self.box.Shape.Faces), 6)
-        self.assertEqual(len(self.doc.Objects), 1)
-        self.assertEqual(self.doc.UndoCount, count)
+        _, result, divided = self.draw(V(30, 10, 20), V(50, 20, 20))
+        self.assertTrue(divided)
+        self.assertEqual(self.doc.UndoCount, count + 1)
+        self.assertEqual(len(self.box.Shape.Faces), 7)
+        self.assertAlmostEqual(self.box.Shape.Volume, 40 * 30 * 20, places=6)
+        beyond = [o for o in self.doc.Objects if o != self.box]
+        self.assertEqual(len(beyond), 1)
+        self.assertAlmostEqual(beyond[0].Shape.Area, 100, places=6)
+        self.assertAlmostEqual(beyond[0].Shape.BoundBox.XMin, 40, places=6)
 
 
 if __name__ == '__main__':

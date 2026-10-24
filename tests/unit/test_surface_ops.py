@@ -62,6 +62,14 @@ class SurfaceEditTests(DocumentCase):
         with self.assertRaises(ValueError):
             so.remove_rounds(obj, 2)
 
+    def test_remove_rounds_keeps_a_rounded_pocket_and_counts_what_stays(self):
+        from test_surface_edit import rounded_pocket
+        obj = self.add(rounded_pocket())
+        report = so.remove_rounds(obj, 3)
+        self.assertAlmostEqual(obj.Shape.Volume, 40 * 30 * 20 - 20 * 8 * 10, delta=1)
+        left = len(so.rounds(obj, 3))
+        self.assertEqual((report['found'], report['removed'], report['failed']), (12, 12 - left, left))
+
     def test_imprint_on_a_moved_cylinder_selects_the_new_region(self):
         cylinder = Part.makeCylinder(20, 40)
         placement = App.Placement(V(100, 0, 0), App.Rotation(V(1, 0, 0), 90))

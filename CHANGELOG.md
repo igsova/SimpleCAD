@@ -3,6 +3,45 @@
 Notable changes to SimpleCAD. Restart FreeCAD after updating to load new
 commands, and reconnect an MCP client to refresh its tool list.
 
+## Unreleased
+
+### Fixed
+
+- **Make mesh editable** with smooth surfaces off no longer cuts a stepped
+  bore into one straight hole. Equal counterbores at both ends of a narrower
+  hole were taken for a single through hole, which removed the material
+  between them without a warning. Each section now becomes its own analytic
+  hole. (#4)
+- **Union** joins solids that touch tangentially, such as a block whose sides
+  are tangent to a round boss. Its check for unexpected material cut the
+  pieces out one at a time, which left a false remainder there, and refused
+  with "Union would add unexpected material". (#8)
+- **Line** splits where it crosses the edge of a flat face in its plane, as
+  in SketchUp. A loop drawn from the middle of a rectangle, out past its edge
+  and back, now divides the rectangle and adds a face beside it, and a loop
+  from one point of an edge out and back to another closes into a face. Both
+  stayed loose lines.
+- **Rectangle**, **Circle** and **Polygon** drawn across the edge of a flat
+  face divide the face where they overlap, and the part beyond becomes a face
+  beside it, as in SketchUp. They used to lie over the face as a separate
+  overlapping face, or were refused when started on the face.
+- An arc whose ends lie on a face but which bulges beside it no longer
+  divides the face along its chord.
+- **Remove rounds** counts only the rounds it actually removed. The kernel can
+  return a valid solid with some rounds left, or rebuilt around a neighbour;
+  those were counted as removed. What is left is now tried again one round at
+  a time and counted as failed if it stays. (#6)
+- **Remove rounds** no longer fills a rounded pocket. Removing all its rounds
+  in one kernel call could take the pocket's walls and floor too. A removal
+  that would take a face that is not a round is now refused for that round.
+
+### Changed
+
+- The MCP `convert_mesh` tool fits smooth surfaces unless `surfaces` is
+  given, following the **Fit smooth surfaces** choice last made in **Make
+  mesh editable**, which starts on. It used to leave curved regions faceted by
+  default while the command in FreeCAD fitted them. (#7)
+
 ## 0.39.0
 
 ### Added

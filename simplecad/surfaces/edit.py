@@ -53,19 +53,83 @@ def _single(result):
 
 # --- Delete & heal ----------------------------------------------------------
 
-def _defeature(shape, faces):
+def _defeature(shape, faces, keep_others=False):
     try:
-        return checked(_single(shape.defeaturing(faces)), shape, fewer_faces=True)
+        result = checked(_single(shape.defeaturing(faces)), shape, fewer_faces=True)
     except (Part.OCCError, RuntimeError) as error:
         raise ValueError('The neighbouring faces could not grow to close the gap.') from error
+    if keep_others and _takes_others(shape, faces, result):
+        raise ValueError('Removing these faces would also remove faces next to them.')
+    return result
 
 
-def remove_faces(shape, indices, progress=lambda message: None):
+def _samples(face):
+    """A few points inside the face, away from its edges."""
+    points = [face.valueAt(u, v) for u, v in _domain_points(face, 2)]
+    return points or [face.valueAt(u, v) for u, v in _domain_points(face, 5)[:1]]
+
+
+def _image(face, index, points=None):
+    """Where the face of an edited shape that still holds this face's interior
+    is in its index, or None.
+
+    A removed face has none: its interior now lies inside or outside the
+    solid. A kept face may have grown and still holds its old interior.
+    """
+    points = _samples(face) if points is None else points
+    if not points:
+        return None
+    reach = max(1e-5, 2 * face.getTolerance(1))
+    box = Part.makeCompound([Part.Vertex(point) for point in points]).BoundBox
+    for i in index.near(box, reach):
+        if all(index.faces[i].distToShape(Part.Vertex(point))[0] <= reach for point in points):
+            return i
+    return None
+
+
+def _around(shape, faces):
+    """The shape's index and the faces of it whose bounds meet those faces'."""
+    index = geo.FaceIndex.build(shape)
+    reach = max(1e-5, 2 * shape.getTolerance(1))
+    return index, {i for face in faces for i in index.near(face.BoundBox, reach)}
+
+
+def _takes_others(shape, faces, result):
+    """Whether removing faces also took a face beside them that was kept.
+
+    The kernel can fill a whole rounded pocket when only its rounds are
+    removed, walls and floor included, and still return a valid solid with
+    fewer faces. Only faces whose bounds meet a removed face's are checked.
+    """
+    source, nearby = _around(shape, faces)
+    index = geo.FaceIndex.build(result)
+    return any(_image(source.faces[i], index) is None for i in nearby
+               if not any(source.faces[i].isSame(face) for face in faces))
+
+
+def _left(shape, faces, result):
+    """The faces of the result that remain of faces removed from the shape.
+
+    Every face of the result near them either holds a kept face's interior or
+    is what is left of a removed one: untouched, or rebuilt where an earlier
+    removal changed its neighbours, as a corner round is.
+    """
+    source, nearby = _around(shape, faces)
+    index, near = _around(result, faces)
+    held = {_image(source.faces[i], index) for i in nearby
+            if not any(source.faces[i].isSame(face) for face in faces)}
+    return [index.faces[i] for i in sorted(near - held)]
+
+
+def remove_faces(shape, indices, progress=lambda message: None, keep_others=False):
     """Delete faces and let their neighbours grow until the solid closes again.
 
-    All faces are removed in one kernel call when possible. Otherwise each
-    face is tried on its own, keeping the removals that work, so one stubborn
-    round does not block the rest. Returns (shape, report); raises when
+    All faces are removed in one kernel call when possible. The kernel may
+    return a valid solid with only some of them gone, so what is left of them
+    is then tried one face at a time, as all of them are when the single call
+    fails; one stubborn round does not block the rest. With keep_others, a
+    removal that would also take a face that was not chosen is refused.
+    Returns (shape, report) counting the faces actually gone; raises when
     nothing could be removed.
     """
     solid_body(shape)
@@ -77,28 +141,27 @@ def remove_faces(shape, indices, progress=lambda message: None):
     faces = [shape.Faces[i] for i in indices]
     progress('Removing %d face%s' % (len(faces), '' if len(faces) == 1 else 's'))
     try:
-        result = _defeature(shape, faces)
-        return result, {'removed': len(faces), 'failed': 0, 'faces_before': len(shape.Faces),
-                        'faces_after': len(result.Faces)}
+        current = _defeature(shape, faces, keep_others)
     except ValueError:
         if len(faces) == 1:
             raise
-    current, removed, failed = shape, 0, 0
-    for n, face in enumerate(faces, 1):
-        progress('Removing face %d of %d on its own' % (n, len(faces)))
-        # An earlier removal may have rebuilt this face; it is then left alone.
-        match = next((f for f in current.Faces if coincident.same(f, face)), None)
+        current = shape
+    pending = [(face, _samples(face)) for face in _left(shape, faces, current)]
+    for n, (face, points) in enumerate(pending, 1):
+        # An earlier removal can have rebuilt it again: find where it is now.
+        index = geo.FaceIndex.build(current)
+        match = _image(face, index, points)
         if match is None:
-            failed += 1
             continue
+        progress('Removing face %d of %d on its own' % (n, len(pending)))
         try:
-            current = _defeature(current, [match])
-            removed += 1
+            current = _defeature(current, [index.faces[match]], keep_others)
         except ValueError:
-            failed += 1
-    if not removed:
+            pass
+    failed = min(len(faces), len(_left(shape, faces, current)))
+    if failed == len(faces):
         raise ValueError('None of these faces could be removed: the neighbouring faces cannot grow to close the gap.')
-    return current, {'removed': removed, 'failed': failed, 'faces_before': len(shape.Faces),
+    return current, {'removed': len(faces) - failed, 'failed': failed, 'faces_before': len(shape.Faces),
                      'faces_after': len(current.Faces)}
 
 

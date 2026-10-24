@@ -49,6 +49,18 @@ class RegionMCPTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'either'):
                 self.api.execute('inspect_mesh_region',self.doc,{'object':'M'})
 
+    def test_convert_mesh_fits_surfaces_as_the_gui_last_did_unless_told(self):
+        # The GUI's Fit smooth surfaces starts on; the MCP default follows it (#7).
+        job=NS(status=Mock(return_value={'job_id':'job','status':'running'}))
+        jobs=NS(start=Mock(return_value=job))
+        for chosen,args,expected in ((True,{},True),(False,{},False),(True,{'surfaces':False},False)):
+            # The module may be the real preferences, imported earlier by another test.
+            with patch.object(self.m.preferences,'precision',lambda:.1,create=True),\
+                 patch.object(self.m.preferences,'smooth_surfaces',lambda:chosen,create=True),\
+                 patch.dict(sys.modules,{'simplecad.jobs.mesh':jobs}),patch.object(__import__('simplecad.jobs').jobs,'mesh',jobs,create=True):
+                self.api.execute('convert_mesh',self.doc,{'object':'M',**args})
+            jobs.start.assert_called_with(self.owner,.1,0,expected)
+
     def test_job_dispatch_and_operation_type_checks(self):
         job=NS(operation='region',status=Mock(return_value={'job_id':'job','status':'ready'}),
                apply=Mock(return_value=NS(Name='EditedMesh')),cancel=Mock())

@@ -332,6 +332,58 @@ def loop_plane(edges, flatness):
     return Part.Plane(center, normal)
 
 
+def split_at_face_edges(edge, shapes):
+    """Pieces of a new edge, split where it crosses onto or off a flat face.
+
+    A line that starts on a face and runs past its edge, as SketchUp has it,
+    divides the face with the part on it and can close a face beside it with
+    the rest. Returns [(piece, on_face)], the pieces on faces first: dividing
+    the face gives its boundary the vertices that a loop beside it passes
+    through. An edge wholly on faces or wholly off them stays whole.
+    """
+    if edge.Degenerated or not edge.Vertexes:
+        return [(edge, False)]
+    flat = geo.modeling_precision() * .01
+    samples = [edge.valueAt(edge.FirstParameter + t * (edge.LastParameter - edge.FirstParameter))
+               for t in (0, .25, .5, .75, 1)]
+    faces = []
+    for shape in shapes:
+        if not shape.countElement('Face'):
+            continue
+        index = geo.face_index(shape)
+        for i in index.near(edge.BoundBox, flat):
+            if not index.planar[i]:
+                continue
+            face = index.faces[i]
+            plane = geo.Plane.from_face(face)
+            # Within what divide_face_with_edges counts as on the face.
+            allowance = max(1e-7, face.getTolerance(1, Part.Vertex), flat)
+            if all(abs((point - plane.origin).dot(plane.normal)) <= allowance for point in samples):
+                faces.append(face)
+    on = Part.makeCompound(faces).common(edge).Edges if faces else []
+    if not on:
+        return [(edge, False)]
+    # Where faces meet, the covered pieces share an end; only an end no other
+    # piece shares is where the edge crosses onto or off the faces.
+    ends = [vertex.Point for item in on for vertex in item.Vertexes]
+    crossings = [point for point in ends if sum((other - point).Length <= TOL for other in ends) == 1]
+    if edge.isClosed() and edge.Curve.isPeriodic():
+        # A circle runs on past its seam: one arc between each two crossings.
+        start = edge.FirstParameter
+        period = edge.LastParameter - start
+        found = sorted({round(start + (edge.Curve.parameter(point) - start) % period, 12) for point in crossings})
+        bounds = found + [found[0] + period] if len(found) > 1 else []
+        pieces = [edge.Curve.toShape(low, high) for low, high in zip(bounds, bounds[1:])] or [edge]
+    else:
+        pieces = split_at(edge, crossings, TOL)
+    covered = Part.makeCompound(on)
+
+    def lies_on(piece):
+        middle = piece.valueAt((piece.FirstParameter + piece.LastParameter) / 2)
+        return covered.distToShape(Part.Vertex(middle))[0] <= TOL
+    return sorted(((piece, lies_on(piece)) for piece in pieces), key=lambda item: not item[1])
+
+
 def loop_completions(shapes, edge, loose=()):
     """Faces for flat loops that a new edge closes, as SketchUp does.
 
@@ -387,13 +439,20 @@ def loop_completions(shapes, edge, loose=()):
             normal = geo.unit(normal)
             if not any(abs(abs(normal.dot(other)) - 1) < 1e-9 for other in planes):
                 planes.append(normal)
+    # A loose line drawn earlier from a point inside an edge meets the edge
+    # there, as the new one does at its ends.
+    ends = {}
+    for point in {(v.x, v.y, v.z) for item in everything[count:] for v in (item.Vertexes[0].Point, item.Vertexes[-1].Point)}:
+        for i in nearby(V(*point)):
+            ends.setdefault(i, []).append(V(*point))
     pieces = {}
 
     def graph_pieces(i):
-        """The edge's usable pieces; only an edge the new one touches is split."""
+        """The edge's usable pieces, split only where a new or loose line ends."""
         if i not in pieces:
             item = everything[i]
-            parts = split_at(item, (first, second), flatness) if i in touched else [item]
+            points = ([first, second] if i in touched else []) + ends.get(i, [])
+            parts = split_at(item, points, flatness) if points else [item]
             pieces[i] = [piece for piece in parts if len(piece.Vertexes) == 2 and piece.Length > TOL]
         return pieces[i]
     # Edges within the modeling precision of one plane close a flat loop;

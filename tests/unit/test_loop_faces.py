@@ -5,6 +5,7 @@ import unittest
 import FreeCAD as App
 import Part
 
+from simplecad.core import geometry as geo
 from simplecad.modeling import drawing
 from simplecad.document import operations as ops
 
@@ -126,6 +127,82 @@ class LoopFaceTests(unittest.TestCase):
         obj = self.box_without(lambda c: abs(c.z - 8) < 1e-9)
         faces = drawing.loop_completions([obj.Shape], Part.makeLine(V(0, 0, 8), V(5, 20, 30)))
         self.assertEqual(faces, [])
+
+    def rectangle(self):
+        outline = Part.makePolygon([V(0, 0, 0), V(40, 0, 0), V(40, 60, 0), V(0, 60, 0), V(0, 0, 0)])
+        return ops.new_shape(self.doc, Part.Face(outline), 'Rectangle')
+
+    def draw(self, *points):
+        """Draw a chain of lines, checking each is one Undo step."""
+        changed = []
+        for a, b in zip(points, points[1:]):
+            steps = self.doc.UndoCount
+            changed.append(ops.draw_line(self.doc, V(*a), V(*b))[1])
+            self.assertEqual(self.doc.UndoCount, steps + 1)
+        return changed
+
+    def loose_lines(self):
+        return [o for o in self.doc.Objects if o.Shape.Edges and not o.Shape.Faces]
+
+    def test_loop_from_a_face_across_its_edge_divides_it_and_closes_the_rest(self):
+        # From the middle of a rectangle out past its left edge and back: the
+        # part on the rectangle divides it and the part beside it is a face.
+        obj = self.rectangle()
+        self.assertEqual(self.draw((20, 30, 0), (-20, 70, 0), (-30, 20, 0), (20, 30, 0)), [False, False, True])
+        shape = obj.Shape
+        self.assertTrue(shape.isValid())
+        self.assertEqual(sorted(round(f.Area, 6) for f in shape.Faces), [240, 960, 2160])
+        self.assertFalse(self.loose_lines())
+
+    def test_line_across_a_face_divides_it_and_keeps_the_ends_beyond(self):
+        obj = self.rectangle()
+        self.assertEqual(self.draw((-10, 30, 0), (50, 30, 0)), [True])
+        self.assertEqual(sorted(round(f.Area, 6) for f in obj.Shape.Faces), [1200, 1200])
+        self.assertEqual(sorted(round(o.Shape.Length, 6) for o in self.loose_lines()), [10, 10])
+
+    def test_loop_between_two_points_of_an_edge_closes_beside_it(self):
+        obj = self.rectangle()
+        self.assertEqual(self.draw((0, 10, 0), (-30, 20, 0), (-20, 50, 0), (0, 50, 0)), [False, False, True])
+        self.assertTrue(obj.Shape.isValid())
+        self.assertEqual(sorted(round(f.Area, 6) for f in obj.Shape.Faces), [900, 2400])
+        self.assertFalse(self.loose_lines())
+
+    def test_arc_beside_a_face_closes_against_it_rather_than_along_its_chord(self):
+        # Three quarters of a circle round the corner: both ends on the
+        # rectangle, the arc itself outside it and its chord across it.
+        obj = self.rectangle()
+        arc = Part.Arc(V(30, 0, 0), V(50, 0, 0), V(40, 10, 0)).toShape()
+        self.assertEqual(ops.draw_arc(self.doc, arc), (obj, True))
+        areas = sorted(f.Area for f in obj.Shape.Faces)
+        self.assertAlmostEqual(areas[0], 75 * math.pi, places=6)
+        self.assertAlmostEqual(areas[1], 2400, places=6)
+        self.assertFalse(self.loose_lines())
+
+    def draw_profile(self, profile):
+        steps = self.doc.UndoCount
+        result = ops.draw_profile(self.doc, profile, None, 'Profile')
+        self.assertEqual(self.doc.UndoCount, steps + 1)
+        return result
+
+    def test_rectangle_over_a_corner_divides_the_face_and_joins_the_rest(self):
+        obj = self.rectangle()
+        plane = geo.Plane.named('XY', V(0, 0, 0))
+        self.assertEqual(self.draw_profile(geo.rectangle(plane, V(30, 50, 0), V(50, 70, 0))), (obj, True))
+        self.assertEqual(len(self.doc.Objects), 1)
+        self.assertTrue(obj.Shape.isValid())
+        self.assertEqual(sorted(round(f.Area, 6) for f in obj.Shape.Faces), [100, 300, 2300])
+
+    def test_polygon_with_corners_on_the_edge_divides_the_face(self):
+        # Two corners of the hexagon lie on the rectangle's right edge, so no
+        # side crosses it: the sides on the face and beside it still split.
+        obj = self.rectangle()
+        plane = geo.Plane.named('XY', V(0, 0, 0))
+        hexagon = geo.polygon(plane, V(45, 50, 0), V(55, 50, 0), 6)
+        self.assertEqual(self.draw_profile(hexagon), (obj, True))
+        inside = 5 * 10 * math.sqrt(3) / 2
+        expected = [inside, hexagon.Area - inside, 2400 - inside]
+        for area, value in zip(sorted(f.Area for f in obj.Shape.Faces), sorted(expected)):
+            self.assertAlmostEqual(area, value, places=6)
 
 
 if __name__ == '__main__':

@@ -20,7 +20,12 @@ def transaction(doc, title, material_groups=(), face_materials=()):
     protected = locking.capture(doc)
     if protected and not doc.UndoMode:
         raise ValueError('Enable document Undo before editing a model with locked geometry.')
-    doc.openTransaction("SimpleCAD: " + title)
+    # An edit made of smaller ones joins the transaction already open, so it
+    # stays one Undo step; FreeCAD would commit the open one instead.
+    outer = doc.Name not in _open
+    if outer:
+        doc.openTransaction("SimpleCAD: " + title)
+        _open.add(doc.Name)
     try:
         yield
         settle(doc)
@@ -29,10 +34,18 @@ def transaction(doc, title, material_groups=(), face_materials=()):
         for obj, values in face_materials:
             obj.ViewObject.ShapeAppearance = values
     except Exception:
-        doc.abortTransaction()
+        if outer:
+            doc.abortTransaction()
         raise
     else:
-        doc.commitTransaction()
+        if outer:
+            doc.commitTransaction()
+    finally:
+        if outer:
+            _open.discard(doc.Name)
+
+
+_open = set()  # names of documents with a SimpleCAD transaction open
 
 
 def settle(doc):
@@ -565,6 +578,12 @@ def draw_profile(doc, profile, preferred, title):
         planned.extend((other, None) for other in duplicates)
         apply_plan(doc, planned, "Divide face with " + title.lower())
         return obj, True
+    # A profile across a face's edge divides the face where it overlaps and
+    # adds a face beside it, as in SketchUp, rather than lying over it.
+    shapes = [obj.Shape for obj in drawable(doc, preferred) if obj not in duplicates]
+    pieces = [item for edge in profile.Edges for item in drawing.split_at_face_edges(edge, shapes)]
+    if len({on for _, on in pieces}) == 2:
+        return draw_pieces(doc, pieces, preferred, title)
     if preferred is not None and preferred not in duplicates:
         # A profile started on a face must fit on it, never fall back to an
         # overlapping free face when the containment check fails.
@@ -614,7 +633,8 @@ def draw_arc(doc, edge, preferred=None):
     return draw_edge(doc, edge, preferred, "Arc")
 
 
-def draw_edge(doc, edge, preferred=None, title="Line", surface=False, closed=False):
+def drawable(doc, preferred=None):
+    """The visible plain shapes a new edge can divide or join, preferred first."""
     candidates = ([preferred] if preferred is not None else []) + [
         obj for obj in doc.Objects if obj != preferred]
     usable = []
@@ -628,6 +648,41 @@ def draw_edge(doc, edge, preferred=None, title="Line", surface=False, closed=Fal
         except ValueError:
             continue
         usable.append(obj)
+    return usable
+
+
+def draw_edge(doc, edge, preferred=None, title="Line", surface=False, closed=False):
+    usable = drawable(doc, preferred)
+    pieces = [(edge, False)] if surface else drawing.split_at_face_edges(edge, [obj.Shape for obj in usable])
+    if len(pieces) == 1:
+        return _draw_edge(doc, edge, usable, preferred, title, surface, closed)
+    return draw_pieces(doc, pieces, preferred, title, edge.Vertexes[-1].Point)
+
+
+def draw_pieces(doc, pieces, preferred, title, end=None):
+    """Draw the pieces of edges split at flat faces' edges, in one Undo step.
+
+    Pieces on a face come first and divide it; the face's boundary then
+    gains the vertices that the pieces beside it close loops through.
+    """
+    names = []
+    with transaction(doc, title):
+        for piece, _ in sorted(pieces, key=lambda item: not item[1]):
+            obj, divided = _draw_edge(doc, piece, drawable(doc, preferred), preferred, title)
+            names.append((obj.Name, divided))
+    # A later piece can take up the loose line an earlier one left.
+    results = [(doc.getObject(name), divided) for name, divided in names if doc.getObject(name)]
+    faces = [obj for obj, divided in results if divided]
+    # Report the face the edge ends on, as for an edge drawn whole, so a line
+    # that closes a loop there still ends the chain.
+    ending = [obj for obj in faces
+              if end is not None and geo.on_face_boundary(obj.Shape, end, geo.modeling_precision())]
+    if faces:
+        return (ending or faces)[0], True
+    return results[-1][0], False
+
+
+def _draw_edge(doc, edge, usable, preferred, title, surface=False, closed=False):
     loose = [(obj, coinc.loose_edges(obj.Shape)) for obj in usable if not obj.InList]
     edges = [edge for _, lines in loose for edge in lines]
     targets = ([preferred] if preferred in usable else []) if surface else usable

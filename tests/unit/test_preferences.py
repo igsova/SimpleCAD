@@ -32,6 +32,15 @@ class PreferenceTests(unittest.TestCase):
         finally:
             parent.RemGroup("SimpleCAD_TestPreferences")
 
+    def test_smooth_surfaces_starts_on_and_follows_the_last_choice(self):
+        path = "User parameter:BaseApp/Preferences/Mod/SimpleCAD_TestSurfaces"
+        parent = App.ParamGet("User parameter:BaseApp/Preferences/Mod")
+        self.addCleanup(parent.RemGroup, "SimpleCAD_TestSurfaces")
+        with patch.object(prefs, "PARAMETER_PATH", path):
+            self.assertTrue(prefs.smooth_surfaces())
+            App.ParamGet(path).SetBool("smooth_surfaces", False)
+            self.assertFalse(prefs.smooth_surfaces())
+
     def snapper(self, settings):
         self.face = Part.makePlane(100, 100)
         doc = SimpleNamespace(Objects=[source(self.face)])

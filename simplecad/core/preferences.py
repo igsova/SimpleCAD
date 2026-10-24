@@ -91,6 +91,11 @@ def precision():
     return load().precision
 
 
+def smooth_surfaces():
+    """Whether Make mesh editable fits smooth surfaces, as last chosen there."""
+    return App.ParamGet(PARAMETER_PATH).GetBool('smooth_surfaces', True)
+
+
 VIEW_PATH = "User parameter:BaseApp/Preferences/View"
 LONG_PRESS = "EnableLongPressClarifySelection"
 

@@ -101,14 +101,23 @@ class OverlappingProfileDocumentTests(unittest.TestCase):
         self.doc.undo()
         self.assertEqual(top_areas(self.box.Shape), [42, 138, 196, 824])
 
-    def test_rejected_profile_changes_nothing(self):
+    def test_profile_off_the_top_divides_it_and_makes_a_face_beside_it(self):
         op.draw_profile(self.doc, g.rectangle(TOP, V(0, 0, 20), V(15, 12, 20)), self.box, 'Rectangle')
-        count, shape = self.doc.UndoCount, self.box.Shape.copy()
-        with self.assertRaises(ValueError):
-            op.draw_profile(self.doc, g.rectangle(TOP, V(8, 6, 20), V(50, 20, 20)), self.box, 'Rectangle')
-        self.assertEqual(self.doc.UndoCount, count)
+        count, before = self.doc.UndoCount, top_areas(self.box.Shape)
+        _, divided = op.draw_profile(self.doc, g.rectangle(TOP, V(8, 6, 20), V(50, 20, 20)), self.box, 'Rectangle')
+        self.assertTrue(divided)
+        self.assertEqual(self.doc.UndoCount, count + 1)
+        self.assertTrue(self.box.Shape.isValid())
+        self.assertAlmostEqual(self.box.Shape.Volume, 24000)
+        # First only, overlap, the second's part on the top, and the rest of
+        # the top, which the second cuts in two.
+        self.assertEqual(top_areas(self.box.Shape), [42, 138, 150, 406, 464])
+        # The part off the top is a face of its own beside the solid.
+        beside = [obj for obj in self.doc.Objects if obj is not self.box]
+        self.assertEqual([round(obj.Shape.Area, 6) for obj in beside], [140])
+        self.doc.undo()
         self.assertEqual(len(self.doc.Objects), 1)
-        self.assertTrue(self.box.Shape.isEqual(shape) or len(self.box.Shape.Faces) == len(shape.Faces))
+        self.assertEqual(top_areas(self.box.Shape), before)
 
 
 if __name__ == '__main__':
