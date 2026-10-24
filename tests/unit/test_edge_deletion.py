@@ -1,4 +1,5 @@
 """Native topology and document tests for selection-aware Delete."""
+import math
 from pathlib import Path
 import tempfile
 import unittest
@@ -415,6 +416,59 @@ class EraseDocumentTests(unittest.TestCase):
         self.assertEqual(len(merged.Faces) if hasattr(merged, "Faces") else 1, 1)
         self.assertAlmostEqual(merged.Area, 200.0, places=2)
 
+
+    def top_edge(self, obj, x0, x1, y0, y1, z):
+        """The edge of obj lying along the given span at height z."""
+        return next("Edge%d" % i for i, e in enumerate(obj.Shape.Edges, 1)
+                    if all(abs(a - b) < 1e-6 for a, b in zip(
+                        (e.BoundBox.XMin, e.BoundBox.XMax, e.BoundBox.YMin, e.BoundBox.YMax, e.BoundBox.ZMin, e.BoundBox.ZMax),
+                        (x0, x1, y0, y1, z, z))))
+
+    def test_line_between_flush_solids_joins_them_and_merges_their_tops(self):
+        # It used to strip both tops and the wall under the line, leaving two
+        # open shells.
+        first = op.new_shape(self.doc, Part.makeBox(10, 10, 10), "First")
+        second = op.new_shape(self.doc, Part.makeBox(10, 10, 10, V(10, 0, 0)), "Second")
+        name, count = second.Name, self.doc.UndoCount
+        op.delete_selection([(first, [self.top_edge(first, 10, 10, 0, 10, 10)])])
+        self.assertEqual(self.doc.UndoCount, count + 1)
+        self.assertIsNone(self.doc.getObject(name))
+        self.assertEqual(first.Shape.ShapeType, "Solid")
+        self.assertTrue(first.Shape.isValid())
+        self.assertAlmostEqual(first.Shape.Volume, 2000)
+        self.assertEqual([round(f.Area, 6) for f in first.Shape.Faces if abs(f.CenterOfMass.z - 10) < 1e-9], [200])
+        self.doc.undo()
+        self.assertEqual(sorted(round(o.Shape.Volume, 6) for o in self.doc.Objects if o.Shape.Solids), [1000, 1000, 12000])
+
+    def test_line_on_regions_pulled_from_a_sheet_merges_the_top(self):
+        # A rectangle drawn across a circle on a sheet, each region pulled up
+        # alone: deleting a line on the cylinder's top merges it again.
+        self.doc.removeObject(self.obj.Name)
+        ground = g.Plane.named("XY")
+        sheet = op.new_shape(self.doc, Part.makePlane(100, 80), "Sheet")
+        op.draw_circle(self.doc, g.circle(ground, V(50, 40, 0), 20), sheet)
+        op.draw_profile(self.doc, g.rectangle(ground, V(50, 40, 0), V(78, 55, 0)), sheet, "Rectangle")
+        pulled = []
+        for point in (V(35, 40, 0), V(55, 45, 0), V(75, 50, 0)):
+            obj, face = next((obj, face) for obj in self.doc.Objects
+                             for face in obj.Shape.Faces if face.isInside(point, 1e-6, True))
+            op.extrude(obj, face, 20)
+            pulled.append(next(o for o in self.doc.Objects if o.Shape.Solids and o.Shape.isInside(point + V(0, 0, 10), 1e-6, True)))
+        cylinder, quarter, beside = pulled
+        name, count = quarter.Name, self.doc.UndoCount
+        line = self.top_edge(cylinder, 50, 50 + 175 ** .5, 55, 55, 20)
+        op.delete_selection([(cylinder, [line])])
+        self.assertEqual(self.doc.UndoCount, count + 1)
+        self.assertIsNone(self.doc.getObject(name))
+        self.assertEqual(cylinder.Shape.ShapeType, "Solid")
+        self.assertTrue(cylinder.Shape.isValid())
+        self.assertAlmostEqual(cylinder.Shape.Volume, math.pi * 400 * 20, places=3)
+        top = [f.Area for f in cylinder.Shape.Faces if abs(f.CenterOfMass.z - 20) < 1e-9]
+        self.assertEqual(len(top), 1)
+        self.assertAlmostEqual(top[0], math.pi * 400, places=3)
+        # The block pulled beside the cylinder is untouched.
+        self.assertEqual(len(beside.Shape.Faces), 6)
+        self.assertTrue(beside.Shape.isValid())
 
 if __name__ == "__main__":
     unittest.main()

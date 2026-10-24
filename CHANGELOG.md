@@ -3,6 +3,16 @@
 Notable changes to SimpleCAD. Restart FreeCAD after updating to load new
 commands, and reconnect an MCP client to refresh its tool list.
 
+## Unreleased
+
+### Fixed
+
+- Deleting a line between the flush tops of two separate solids joins them
+  and merges the tops. Regions of a sheet pulled up one at a time to the same
+  height are separate solids, and such a Delete erased the line from each
+  alone: both lost their top and the wall under the line, leaving open
+  shells.
+
 ## 0.39.1
 
 ### Fixed

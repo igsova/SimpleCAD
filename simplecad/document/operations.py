@@ -1023,6 +1023,7 @@ def delete_selection(selection):
     # Resolve original names before topology changes, and reach every visible
     # full geometric match. Whole-object selection deliberately does not spread.
     whole_objects = {name for name, (_, names) in targets.items() if not names}
+    chosen = [obj for obj, _ in selection]
     seeds, ignored_seams = [], 0
     for obj, names in targets.values():
         # Edges of faces selected on the same object go with those faces. A
@@ -1089,12 +1090,8 @@ def delete_selection(selection):
     groups = []
     for obj, names in entries:
         selected = [obj.Shape.getElement(name) for name in names if name.startswith("Edge")]
-        # A solid joins a separate surface too: a face drawn beside a block
-        # merges with the block's coplanar face, as in SketchUp.
         touching = [group for group in groups if names
-                    and any(other_names and not (obj.Shape.Solids and other.Shape.Solids)
-                            and any(coinc.same(edge, other.Shape.getElement(name))
-                                    for edge in selected for name in other_names if name.startswith("Edge"))
+                    and any(other_names and merges_with(obj, selected, other, other_names)
                             for other, other_names in group)]
         combined = [(obj, names)]
         for group in touching:
@@ -1107,11 +1104,20 @@ def delete_selection(selection):
         if len(group) == 1:
             planned.append((obj, geo.erase_elements(obj.Shape, names) if names else None))
             continue
-        shape = Part.makeCompound([member.Shape for member, _ in group])
-        if shape.Solids:
+        members = [member.Shape for member, _ in group]
+        solids = [shape for shape in members if shape.Solids]
+        if len(solids) > 1:
+            # Solids flush across the line join first, as Union would, but
+            # unrefined so that their other divisions stay.
+            fused = solids[0].fuse(solids[1:])
+            if len(fused.Solids) != 1 or not fused.isValid():
+                raise ValueError("The solids on both sides of this line cannot be joined.")
+            members = fused.Solids + [shape for shape in members if not shape.Solids]
+        shape = Part.makeCompound(members) if len(members) > 1 else members[0]
+        if shape.Solids and len(members) > 1:
             # Erase on the faces of all members as one surface; a result that
             # closes becomes a solid again.
-            shape = Part.makeCompound([face for member, _ in group for face in member.Shape.Faces])
+            shape = Part.makeCompound([face for member in members for face in member.Faces])
         selected = [member.Shape.getElement(name) for member, names in group for name in names]
         selected_lookup = coinc.Index(selected)
         names = [kind + str(i + 1) for kind in ("Edge", "Face")
@@ -1119,13 +1125,43 @@ def delete_selection(selection):
                  if next(selected_lookup.matches(part), None) is not None]
         result = geo.erase_elements(shape, names)
         # Retain a referenced object's identity where possible.
-        # A solid's object keeps its identity over a surface split off it.
+        # A solid's object keeps its identity over a surface split off it,
+        # and the selected solid over one joined to it.
+        solid = [member for member, _ in group if member.Shape.Solids]
         keeper = next((member for member, _ in group if member.InList),
-                      next((member for member, _ in group if member.Shape.Solids), obj))
+                      next((member for member in solid if member in chosen), solid[0] if solid else obj))
         planned.append((keeper, result))
         planned.extend((member, None) for member, _ in group if member != keeper)
     apply_plan(doc, planned, "Delete")
     return len(planned), ignored_seams
+
+
+def merges_with(obj, edges, other, other_names):
+    """Whether erasing these edges of obj merges a face of the other object.
+
+    A separate surface on the line always merges: a face drawn beside a block
+    joins the block's coplanar face, as in SketchUp. A separate solid merges
+    only where a flat face of each lies in one plane across the line.
+    """
+    for name in other_names:
+        if not name.startswith("Edge"):
+            continue
+        other_edge = other.Shape.getElement(name)
+        for edge in edges:
+            if coinc.same(edge, other_edge) and (not (obj.Shape.Solids and other.Shape.Solids)
+                                                 or flush_across(obj.Shape, edge, other.Shape, other_edge)):
+                return True
+    return False
+
+
+def flush_across(shape, edge, other, other_edge):
+    """Whether a flat face of each shape on the edge lies in one plane, side
+    by side across it rather than one over the other, like a shared wall."""
+    def flat(owner, line):
+        return [(face, geo.Plane.from_face(face)) for face in owner.ancestorsOfType(line, Part.Face)
+                if isinstance(face.Surface, Part.Plane)]
+    return any(geo.same_plane(a, b) and first.common(second).Area < coinc.TOL
+               for first, a in flat(shape, edge) for second, b in flat(other, other_edge))
 
 
 def apply_plan(doc, planned, title):
