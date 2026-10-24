@@ -3,7 +3,7 @@
 Notable changes to SimpleCAD. Restart FreeCAD after updating to load new
 commands, and reconnect an MCP client to refresh its tool list.
 
-## Unreleased
+## 0.39.1
 
 ### Fixed
 

@@ -2,7 +2,7 @@
 <package format="1">
   <name>SimpleCAD</name>
   <description>Direct modeling in the spirit of SketchUp: draw, push/pull and edit faces of Part shapes and STL meshes, with no sketches or feature tree.</description>
-  <version>0.39.0</version>
+  <version>0.39.1</version>
   <date>2026-10-24</date>
   <maintainer>SimpleCAD contributors</maintainer>
   <license file="LICENSE">MIT</license>
