@@ -73,6 +73,7 @@ notes and commit messages may use the old names. This table maps them:
 ```text
 gui/workbench.py → gui/commands.py → gui/controller.py
                                       ├── gui/status_bar.py      status bar controls
+                                      ├── gui/size_input.py      size boxes typed into in the 3D view
                                       ├── gui/snapping.py        camera rays, picking, inference
                                       ├── gui/previews/overlay.py temporary unpickable Coin nodes
                                       ├── gui/tools/*             tool panels and sessions

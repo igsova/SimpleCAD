@@ -50,9 +50,10 @@ def run():
 
     def exact(text):
         assert not keypress(Qt.Key_Tab)
-        assert QtWidgets.QApplication.focusWidget() == c.controls.value
-        c.controls.value.setText(text)
-        keypress(Qt.Key_Return, c.controls.value)
+        box = QtWidgets.QApplication.focusWidget()
+        assert c.size_input.owns(box)  # the size box in the view
+        box.insert(text)  # as typed: the boxes fill the status-bar field
+        keypress(Qt.Key_Return, box)
 
     def corners(obj):
         return [v.Point for v in getattr(obj, 'Shape', obj).Vertexes]

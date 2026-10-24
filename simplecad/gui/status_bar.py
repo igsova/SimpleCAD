@@ -44,7 +44,7 @@ class Controls(QtWidgets.QWidget):
         self.value = QtWidgets.QLineEdit(self)
         self.value.setObjectName("SimpleCADMeasurement")
         self.value.setPlaceholderText("Length / width, height")
-        self.value.setToolTip("Tab while drawing to enter a size; Enter to apply. Move Vertex accepts dx, dy, dz (mm) or a signed distance along the locked axis. Arc uses radius then signed degrees; 2 Point Arc uses endpoint distance then signed bulge. Circle uses radius; Polygon uses center-to-vertex radius. Units default to mm.")
+        self.value.setToolTip("Tab, or a number typed over the 3D view, opens size boxes beside the shape; they fill this field, which accepts typing too. Enter to apply. Move Vertex accepts dx, dy, dz (mm) or a signed distance along the locked axis. Arc uses radius then signed degrees; 2 Point Arc uses endpoint distance then signed bulge. Circle uses radius; Polygon uses center-to-vertex radius. Units default to mm.")
         self.value.setMaximumWidth(180)
         self.value.returnPressed.connect(controller.numeric)
         self.value.textChanged.connect(controller.typed_size)

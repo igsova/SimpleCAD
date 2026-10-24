@@ -84,13 +84,13 @@ def run(screenshot=None):
                 QtWidgets.QApplication.sendEvent(widget(), QtGui.QKeyEvent(
                     kind, key, QtCore.Qt.NoModifier, "" if char in "\b\r" else char))
 
-    # A digit typed over the view starts the field; the label shows the
+    # A digit typed over the view opens the size box; the label shows the
     # typed length while the line keeps its own until Enter.
     start, drawn, live = V(c.anchor), V(c.point), c.controls.value.placeholderText()
     c.focus_view()
     keys("8", QtWidgets.QApplication.focusWidget)
-    assert QtWidgets.QApplication.focusWidget() == c.controls.value
-    keys("0", lambda: c.controls.value)
+    assert c.size_input.owns(QtWidgets.QApplication.focusWidget())  # the size box in the view
+    keys("0", QtWidgets.QApplication.focusWidget)
     assert c.controls.value.text() == "80" and shown()[0] == "80.00 mm", shown()
     assert (c.point - drawn).Length < 1e-9 and c.controls.value.placeholderText() == live
     assert doc.UndoCount == count + 1
@@ -104,13 +104,13 @@ def run(screenshot=None):
     assert text == c.controls.value.placeholderText() != "80.00 mm", text
     assert c.controls.value.text() == "80"
     # Units, unfinished text and an emptied field.
-    keys(" c", lambda: c.controls.value)
+    keys(" c", QtWidgets.QApplication.focusWidget)
     assert shown()[0] == "80 c", shown()
-    keys("m", lambda: c.controls.value)
+    keys("m", QtWidgets.QApplication.focusWidget)
     assert shown()[0] == "800.00 mm", shown()
-    keys("\b" * 5, lambda: c.controls.value)
+    keys("\b" * 5, QtWidgets.QApplication.focusWidget)
     assert c.controls.value.text() == "" and shown()[0] == c.controls.value.placeholderText()
-    keys("40\r", lambda: c.controls.value)
+    keys("40\r", QtWidgets.QApplication.focusWidget)
     assert c.tool == "Line" and doc.UndoCount == count + 2
     assert abs((c.anchor - start).Length - 40) < 1e-6, c.anchor
     App.Console.PrintMessage("PASS: typed lengths show beside the line until the pointer moves; Enter draws them\n")

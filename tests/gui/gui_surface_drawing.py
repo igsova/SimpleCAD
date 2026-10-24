@@ -60,9 +60,10 @@ def run():
             assert focus is not None
             for event in (QtCore.QEvent.ShortcutOverride,QtCore.QEvent.KeyPress):
                 QtWidgets.QApplication.sendEvent(focus,QtGui.QKeyEvent(event,QtCore.Qt.Key_Tab,QtCore.Qt.NoModifier))
-            assert QtWidgets.QApplication.focusWidget() == c.controls.value
-            c.controls.value.setText(text)
-            QtWidgets.QApplication.sendEvent(c.controls.value,QtGui.QKeyEvent(
+            box = QtWidgets.QApplication.focusWidget()
+            assert c.size_input.owns(box)  # the size box in the view
+            box.insert(text)  # as typed: the boxes fill the status-bar field
+            QtWidgets.QApplication.sendEvent(box,QtGui.QKeyEvent(
                 QtCore.QEvent.KeyPress,QtCore.Qt.Key_Return,QtCore.Qt.NoModifier))
 
         for tool,size in (('Rectangle','3 mm, 4 mm'),('Circle','2 mm'),('Polygon','2 mm')):

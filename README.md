@@ -91,7 +91,9 @@ folder and links the clone there. Add `--copy` for an independent copy, or
 
 1. Switch to the **SimpleCAD** workbench (see Install above) and click
    **Rectangle** (or press **R** with the 3D view focused). Click a corner,
-   press **Tab**, type `40, 30` and press **Enter**.
+   press **Tab** and type `40, 30`: the width and height go into two boxes on
+   the rectangle's sides, and the comma moves from one to the other. Press
+   **Enter**.
 2. Press **P** (Push/Pull), click the rectangle, press **Tab**, type `20` and
    press **Enter**. You now have a 40 × 30 × 20 mm block.
 3. Press **L** (Line), click the midpoint of one top edge, then the midpoint

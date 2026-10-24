@@ -83,7 +83,7 @@ Line draws connected straight segments, one per click. It follows the world X, Y
 | --- | --- |
 | <kbd>X</kbd> / <kbd>Y</kbd> / <kbd>Z</kbd> | Lock the next segment to that world axis; press the same key again to unlock. The lock resets after each segment. |
 | <kbd>→ ← ↑ ↓</kbd> | Before the first click, choose the plane: → YZ, ← XZ, ↑ XY, ↓ Auto. After it, lock the direction to X, Y or Z, like the letter keys. |
-| <kbd>Tab</kbd> | Focus the status-bar field to type a length, such as 20 or 2 cm. A negative length reverses the direction. |
+| <kbd>Tab</kbd> | Open a box on the length label to type a length, such as 20 or 2 cm. Typing a number opens it too. A negative length reverses the direction. |
 | <kbd>Enter</kbd> | Add the typed segment and continue from its end. |
 | <kbd>Esc</kbd> | Finish the line. Every clicked segment stays; only the unfinished preview is discarded. |
 | <kbd>⌘Z</kbd> | End the line and undo the last segment, one segment at a time. |
@@ -131,7 +131,7 @@ Rectangle draws a filled rectangular face from two opposite corners. Use it as a
 | Key | What it does |
 | --- | --- |
 | <kbd>→ ← ↑ ↓</kbd> | Choose the plane: → YZ, ← XZ, ↑ XY, ↓ back to Auto. The plane passes through the point you start from; after the first click the preview turns about that point. |
-| <kbd>Tab</kbd> | Type width, height, such as 40, 30 or 4 cm, 3 cm. Negative values extend the other way along the plane's axes. |
+| <kbd>Tab</kbd> | Open a width and a height box on the rectangle's sides. Type width, height, such as 40, 30 or 4 cm, 3 cm; the comma, or Tab, moves to the height box. Negative values extend the other way along the plane's axes. |
 | <kbd>Enter</kbd> | Create the rectangle with the typed size. |
 | <kbd>Esc</kbd> | Cancel the unfinished rectangle. |
 

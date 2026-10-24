@@ -78,9 +78,11 @@ def run():
         c.click(pos(start + V(0, 2, 0)))
         anchor = V(c.anchor)
         keypress(Qt.Key_Tab)
-        assert QtWidgets.QApplication.focusWidget() == c.controls.value
-        c.controls.value.setText('12, 6')
-        keypress(Qt.Key_Return, c.controls.value)
+        field = QtWidgets.QApplication.focusWidget()
+        assert c.size_input.owns(field)  # the width box in the view
+        field.insert('12, 6')  # the comma moves on to the height box
+        assert c.controls.value.text() == '12, 6'
+        keypress(Qt.Key_Return, field)
         assert c.tool is None
         assert len(doc.Objects) == 1 and len(box.Shape.Faces) == 7
         assert len(regions(anchor, anchor + V(12, 6, 0))) == 1, [f.Area for f in box.Shape.Faces]

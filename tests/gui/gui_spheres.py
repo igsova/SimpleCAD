@@ -39,9 +39,10 @@ def run(screenshot=None):
 
     def exact(text):
         keypress(QtCore.Qt.Key_Tab)
-        assert QtWidgets.QApplication.focusWidget() == c.controls.value
-        c.controls.value.setText(text)
-        keypress(QtCore.Qt.Key_Return, field=c.controls.value)
+        box = QtWidgets.QApplication.focusWidget()
+        assert c.size_input.owns(box)  # the size box in the view
+        box.insert(text)  # as typed: the boxes fill the status-bar field
+        keypress(QtCore.Qt.Key_Return, field=box)
 
     assert 'SimpleCAD_Sphere' in Gui.listCommands()
     assert not QtGui.QIcon(str(ROOT/'Resources/icons/sphere.svg')).pixmap(56, 56).isNull()

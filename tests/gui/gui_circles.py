@@ -44,9 +44,10 @@ def run(screenshot=None):
 
     def exact(value):
         keypress(QtCore.Qt.Key_Tab)
-        assert QtWidgets.QApplication.focusWidget() == c.controls.value
-        c.controls.value.setText(value)
-        keypress(QtCore.Qt.Key_Return, field=c.controls.value)
+        box = QtWidgets.QApplication.focusWidget()
+        assert c.size_input.owns(box)  # the size box in the view
+        box.insert(value)  # as typed: the boxes fill the status-bar field
+        keypress(QtCore.Qt.Key_Return, field=box)
 
     assert "SimpleCAD_Circle" in Gui.listCommands()
     assert not QtGui.QIcon(str(ROOT / "Resources/icons/circle.svg")).pixmap(56, 56).isNull()

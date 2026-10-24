@@ -13,6 +13,7 @@ from . import clipboard, snapping
 from .snapping import Snapper, pick, ray, screen, pull_drag, snap_pull, shared_picks
 from .previews.overlay import Preview, edges, outline
 from .qt import QtCore, QtWidgets
+from .size_input import SizeInput
 from .status_bar import Controls
 
 _instance = None
@@ -43,6 +44,7 @@ class Controller(QtCore.QObject):
         self.callback = None
         self.preview = None
         self.controls = None
+        self.size_input = SizeInput(self)
         self.round_session = None
         self.slice_session = None
         self.mesh_split_session = None
@@ -240,6 +242,7 @@ class Controller(QtCore.QObject):
             self.controls.plane.setCurrentText(self.plane_restore)
             self.controls.plane.blockSignals(blocked)
         self.plane_restore = None
+        self.size_input.close()
         if self.controls:
             self.controls.clear()
         if not quiet:
@@ -726,6 +729,7 @@ class Controller(QtCore.QObject):
         self.message('Move vertex · X/Y/Z locks an axis · Tab: dx, dy, dz or axis distance · Esc cancels')
 
     def focus_view(self):
+        self.size_input.close()  # back to the view: typing a size is over
         mdi = Gui.getMainWindow().findChild(QtWidgets.QMdiArea)
         if mdi and mdi.currentSubWindow():
             mdi.currentSubWindow().widget().setFocus()
@@ -829,7 +833,12 @@ class Controller(QtCore.QObject):
                         self.motion(pos)
                         self.commit()
             elif event.isOfType(coin.SoLocation2Event.getClassTypeId()):
-                self.motion(pos)
+                try:
+                    self.motion(pos)
+                except ValueError as error:
+                    # Such as an edge-on plane: every move would repeat it, so
+                    # it is a status-bar hint rather than a Report view error.
+                    self.message(str(error))
         except Exception as error:
             self.report(error)
             if not isinstance(error, ValueError):
@@ -1618,7 +1627,8 @@ class Controller(QtCore.QObject):
         if event.type() not in (QtCore.QEvent.KeyPress, QtCore.QEvent.ShortcutOverride):
             return False
         focus = QtWidgets.QApplication.focusWidget()
-        in_value = bool(focus and (focus == self.controls.value or focus == self.controls.sides
+        in_box = self.size_input.owns(focus)
+        in_value = bool(focus and (in_box or focus == self.controls.value or focus == self.controls.sides
                                   or self.controls.sides.isAncestorOf(focus)))
         if in_value:
             if event.key() == QtCore.Qt.Key_Escape:
@@ -1626,6 +1636,12 @@ class Controller(QtCore.QObject):
                 if event.type() == QtCore.QEvent.KeyPress:
                     self.cancel()
                     self.focus_view()
+                return True
+            if in_box and event.key() in (QtCore.Qt.Key_Tab, QtCore.Qt.Key_Backtab):
+                # Between the width and height boxes, not on to other widgets.
+                event.accept()
+                if event.type() == QtCore.QEvent.KeyPress:
+                    self.size_input.step(-1 if event.key() == QtCore.Qt.Key_Backtab else 1)
                 return True
             return False
         edit = clipboard.command(event)
@@ -1658,8 +1674,10 @@ class Controller(QtCore.QObject):
         if event.type() == QtCore.QEvent.ShortcutOverride:
             return True
         if numeric:
-            self.controls.value.setFocus()
-            self.controls.value.setText("" if key == QtCore.Qt.Key_Tab else event.text())
+            text = "" if key == QtCore.Qt.Key_Tab else event.text()
+            if not self.size_input.open(text):
+                self.controls.value.setFocus()
+                self.controls.value.setText(text)
         elif arrow is not None:
             if not event.isAutoRepeat():
                 self.arrow_key(arrow)

@@ -3,6 +3,24 @@
 Notable changes to SimpleCAD. Restart FreeCAD after updating to load new
 commands, and reconnect an MCP client to refresh its tool list.
 
+## Unreleased
+
+### Changed
+
+- Sizes are typed in the 3D view. After the first click, press **Tab** or
+  just start typing: a box opens on the size label beside the shape. A
+  Rectangle gets a width and a height box on its sides, and **Tab**,
+  **Shift+Tab** or a comma move between them. Tools without a size label,
+  such as Push/Pull and Move, open the box beside the pointer. Tab used to
+  move the keyboard to a small field in the status bar, which still shows
+  the value and still accepts typing.
+
+### Fixed
+
+- Moving the pointer while the drawing plane is edge-on no longer fills the
+  Report view with red "Plane is edge-on" errors. The hint shows in the
+  status bar instead.
+
 ## 0.38.3
 
 ### Fixed

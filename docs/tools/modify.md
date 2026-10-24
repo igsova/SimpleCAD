@@ -19,7 +19,7 @@ Push/Pull moves a flat face along its normal. Use it to pull a drawn outline int
 1. Click Push/Pull or press P with the 3D view focused. You can also select one flat face first.
 2. Click a flat face. A small panel opens with the distance and direction.
 3. Move the pointer along the face normal to preview the extrusion, or press and drag.
-4. Click, or release the drag, to finish. For an exact value, type it in the panel's Distance field, or press Tab and type it in the status bar, then press Enter.
+4. Click, or release the drag, to finish. For an exact value, type it in the panel's Distance field, or press Tab and type it in the box that opens beside the pointer, then press Enter.
 5. To make a through-hole, push a profile toward the far side until the amber target reads Opposite face snapped, then click.
 
 **Options**
@@ -36,7 +36,7 @@ Push/Pull moves a flat face along its normal. Use it to pull a drawn outline int
 
 | Key | What it does |
 | --- | --- |
-| <kbd>Tab</kbd> | Focus the status-bar value field to type a distance. |
+| <kbd>Tab</kbd> | Open a box beside the pointer to type a distance. |
 | <kbd>Enter</kbd> | Apply the typed distance. |
 | <kbd>Esc</kbd> | Cancel the preview without changing the model. |
 
@@ -82,7 +82,7 @@ Offset draws a parallel copy of a flat face's outline, or of a single straight e
 
 | Key | What it does |
 | --- | --- |
-| <kbd>Tab</kbd> | Focus the status-bar value field to type a distance. |
+| <kbd>Tab</kbd> | Open a box beside the pointer to type a distance. |
 | <kbd>Enter</kbd> | Apply the typed distance. |
 | <kbd>Esc</kbd> | Cancel the preview without changing the model. |
 
@@ -130,7 +130,7 @@ Elongate stretches a round hole, a hole rim or a flat face along a direction you
 
 | Key | What it does |
 | --- | --- |
-| <kbd>Tab</kbd> | Type a distance, or a distance and angle such as 8 @ 45, in the status bar. |
+| <kbd>Tab</kbd> | Type a distance, or a distance and angle such as 8 @ 45, in a box beside the pointer. |
 | <kbd>Enter</kbd> | Apply the typed value. |
 | <kbd>Esc</kbd> | Cancel the preview without changing the model. |
 
@@ -447,7 +447,7 @@ Move slides whole objects from a base point to a destination. Both points snap t
 | Key | What it does |
 | --- | --- |
 | <kbd>X</kbd> / <kbd>Y</kbd> / <kbd>Z</kbd> | Lock or unlock movement along that world axis. |
-| <kbd>Tab</kbd> | Focus the status-bar value field to type a distance. |
+| <kbd>Tab</kbd> | Open a box beside the pointer to type a distance. |
 | <kbd>Enter</kbd> | Move by the typed distance along the locked axis, or along the current pointer direction. |
 | <kbd>Esc</kbd> | Cancel without moving anything. |
 
@@ -723,7 +723,7 @@ Copy places an independent copy of the selected objects, using the same base poi
 | Key | What it does |
 | --- | --- |
 | <kbd>X</kbd> / <kbd>Y</kbd> / <kbd>Z</kbd> | Lock or unlock the copy direction to that world axis. |
-| <kbd>Tab</kbd> | Focus the status-bar value field to type a distance. |
+| <kbd>Tab</kbd> | Open a box beside the pointer to type a distance. |
 | <kbd>Enter</kbd> | Place the copy at the typed distance. |
 | <kbd>Esc</kbd> | Cancel without copying. |
 
