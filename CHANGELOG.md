@@ -16,6 +16,17 @@ commands, and reconnect an MCP client to refresh its tool list.
   are tangent to a round boss. Its check for unexpected material cut the
   pieces out one at a time, which left a false remainder there, and refused
   with "Union would add unexpected material". (#8)
+- **Line** splits where it crosses the edge of a flat face in its plane, as
+  in SketchUp. A loop drawn from the middle of a rectangle, out past its edge
+  and back, now divides the rectangle and adds a face beside it, and a loop
+  from one point of an edge out and back to another closes into a face. Both
+  stayed loose lines.
+- **Rectangle**, **Circle** and **Polygon** drawn across the edge of a flat
+  face divide the face where they overlap, and the part beyond becomes a face
+  beside it, as in SketchUp. They used to lie over the face as a separate
+  overlapping face, or were refused when started on the face.
+- An arc whose ends lie on a face but which bulges beside it no longer
+  divides the face along its chord.
 
 ## 0.39.0
 

@@ -759,8 +759,9 @@ def divide_face_with_edges(shape, edge, existing_edges=(), surface=False):
                 seeds = [line]
         if seeds is None:
             # Across nearly coplanar faces: one segment on each face, meeting on
-            # the edges they share.
-            seeds = drape(edge, faces, flat)
+            # the edges they share. Only a straight line drapes; an arc beside
+            # a face is not its chord across it.
+            seeds = drape(edge, faces, flat) if isinstance(edge.Curve, Part.Line) else None
             if not seeds or not all(covered(seed) for seed in seeds):
                 return None
         edge = seeds[0] if len(seeds) == 1 else edge

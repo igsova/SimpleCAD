@@ -203,15 +203,24 @@ class CircleRegionDocumentTests(unittest.TestCase):
         self.assertEqual(dependent.Source, legacy)
         self.assertEqual(self.doc.UndoCount, count)
 
-    def test_partial_circle_on_picked_face_fails_without_overlay(self):
+    def test_circle_across_the_picked_face_edge_divides_it_and_adds_the_rest(self):
+        # As in SketchUp: no overlay. The arc on the face divides it, and the
+        # part beyond its edge becomes a face joined to it, in one Undo step.
         obj = self.source()
         profile = disk(obj.Shape, center=V(39, 15, 0))
         count = self.doc.UndoCount
-        with self.assertRaises(ValueError):
-            op.draw_circle(self.doc, profile, obj)
+        result, changed = op.draw_circle(self.doc, profile, obj)
+        self.assertEqual((result, changed), (obj, True))
         self.assertEqual(len(self.doc.Objects), 1)
-        self.assertEqual(len(obj.Shape.Faces), 1)
-        self.assertEqual(self.doc.UndoCount, count)
+        self.assertEqual(self.doc.UndoCount, count + 1)
+        shape = obj.Shape
+        self.assertTrue(shape.isValid())
+        self.assertEqual(len(shape.Faces), 3)
+        beyond = 9 * math.acos(1 / 3) - math.sqrt(8)  # the circular segment past x = 40
+        self.assertAlmostEqual(shape.Area, 40 * 30 + beyond, places=6)
+        inside = profile.Area - beyond
+        for area, expected in zip(sorted(f.Area for f in shape.Faces), sorted([beyond, inside, 40 * 30 - inside])):
+            self.assertAlmostEqual(area, expected, places=6)
 
     def test_free_circle_remains_native_disk(self):
         profile = g.circle(g.Plane.named(), V(), 3)
