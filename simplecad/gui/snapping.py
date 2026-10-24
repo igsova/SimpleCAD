@@ -9,7 +9,7 @@ import Part
 from pivy import coin
 from ..core.geometry import EPS, V, Plane, point_on_face
 from ..core import preferences, geometry
-from ..document import visibility
+from ..document import guides, visibility
 
 # Guide look-ahead and angular guard supplement the configurable capture radii.
 MIDPOINT_HINT_RADIUS = 60
@@ -179,6 +179,34 @@ class Snap:
     point: object
     label: str
     axis: str = ""
+    direction: object = None  # of the straight edge or guide line the point is on
+
+
+def straight(edge):
+    """Unit direction of a straight edge, or None for a curve."""
+    if not isinstance(getattr(edge, "Curve", None), Part.Line) or edge.Length <= EPS:
+        return None
+    first, last = edge.Vertexes[0].Point, edge.Vertexes[-1].Point
+    return geometry.unit(last - first) if (last - first).Length > EPS else None
+
+
+def closest_on_lines(p, d, q, e):
+    """Where two endless lines through p and q along unit d and e meet, or None."""
+    normal = d.cross(e)
+    if normal.Length < 1e-9:
+        return None  # Parallel.
+    w = p - q
+    b = d.dot(e)
+    s = (b * e.dot(w) - d.dot(w)) / (1 - b * b)
+    t = (e.dot(w) - b * d.dot(w)) / (1 - b * b)
+    first, second = p + d * s, q + e * t
+    scale = max(1.0, abs(first.x), abs(first.y), abs(first.z))
+    return (first + second) * .5 if (first - second).Length <= 1e-6 * scale else None
+
+
+def on_span(p, d, span, point):
+    """Whether a point on the guide through p along d lies within its span; None is endless."""
+    return span is None or span[0] - EPS <= (point - p).dot(d) <= span[1] + EPS
 
 
 def axis_point(view, pos, anchor, direction):
@@ -615,6 +643,10 @@ class ObjectSnaps:
 
 
 class Snapper:
+    # (point, unit direction, span) of each shown guide line. A span is the
+    # (first, last) distance along a guide point's tail; None is endless.
+    guide_lines = ()
+
     def __init__(self, doc, view, exclude=(), settings=None, collect=True):
         self.settings = settings or preferences.load()
         self.view = view
@@ -630,6 +662,7 @@ class Snapper:
         self._screen_cache_key = None
         self._screen_grid = None
         self._screen_cell_size = 64
+        self.guide_lines = []
         # Push/Pull uses its own height-reference index, not drawing anchors.
         if not collect:
             return
@@ -659,6 +692,14 @@ class Snapper:
         self._collected = self.faces
 
         self.index_segments()
+        for point, direction, start in guides.visible(doc):
+            if direction is not None:
+                self.guide_lines.append((point, direction, None))
+                continue
+            self.points.append((point, "Guide point"))
+            if start is not None:
+                self.guide_lines.append((start, geometry.unit(point - start), (0.0, (point - start).Length)))
+        self.points.extend((point, "Intersection") for point in self.crossings())
 
     def index_segments(self, edges=()):
         """Freeze collected (plus any given) edges into arrays for fast tests."""
@@ -739,6 +780,11 @@ class Snapper:
 
     def on_edge(self, pos, plane=None, hit=None):
         """The exact edge point nearest the pointer, within the edge radius."""
+        found = self.edge_at(pos, plane, hit)
+        return None if found is None else found[0]
+
+    def edge_at(self, pos, plane=None, hit=None):
+        """(point, edge) of the exact edge point nearest the pointer, within the edge radius."""
         if not self.settings.edges or not len(getattr(self, 'segment_starts', ())):
             return None
         origin, direction = ray(self.view, pos)
@@ -771,13 +817,16 @@ class Snapper:
             if distance > self.settings.edge_radius or not self._visible(point, hit, origin, direction):
                 continue
             if best is None or distance < best[0] - 1e-9:
-                best = (distance, point)
-        return None if best is None else best[1]
+                best = (distance, point, self.segment_edges[int(index)])
+        return None if best is None else best[1:]
 
-    def axis_on_edge(self, pos, anchor, axis, plane=None, hit=None):
-        """Where the line from the anchor along an axis crosses a nearby edge."""
-        if not self.settings.edges or not len(getattr(self, 'segment_starts', ())):
-            return None
+    def line_crossings(self, anchor, axis, away=False):
+        """Exact points where the endless line through anchor along axis crosses an edge.
+
+        With away, a crossing at the anchor itself is left out.
+        """
+        if not len(getattr(self, 'segment_starts', ())):
+            return []
         o, d = np.asarray(tuple(anchor)), np.asarray(tuple(axis / axis.Length))
         a, b = self.segment_starts, self.segment_ends
         u = b - a
@@ -795,20 +844,42 @@ class Snapper:
         along = (points - o) @ d
         gap = np.linalg.norm(points - (o + np.outer(along, d)), axis=1)
         scale = max(1.0, float(np.max(np.abs(o))))
-        inside &= (gap <= 1e-6 * scale) & (np.abs(along) > EPS)
-        origin, direction = ray(self.view, pos)
-        direction = direction / direction.Length
-        best = None
+        inside &= gap <= 1e-6 * scale
+        if away:
+            inside &= np.abs(along) > EPS
+        found = []
         for index in np.flatnonzero(inside):
             point = V(*(o + d * along[index]))
             edge = self.segment_edges[int(index)]
             if not isinstance(edge.Curve, Part.Line):
-                # Intersect the axis with the true curve near the sample.
+                # Intersect the line with the true curve near the sample.
                 probe = Part.makeLine(point - axis * 1.0, point + axis * 1.0)
                 distance, pairs, _ = edge.distToShape(probe)
                 if not pairs or distance > 1e-6 * scale:
                     continue
                 point = V(pairs[0][0])
+            found.append(point)
+        return found
+
+    def crossings(self):
+        """Where guide lines and tails cross edges and each other."""
+        found = [point for anchor, direction, span in self.guide_lines
+                 for point in self.line_crossings(anchor, direction) if on_span(anchor, direction, span, point)]
+        for i, (p, d, s) in enumerate(self.guide_lines):
+            for q, e, t in self.guide_lines[i + 1:]:
+                point = closest_on_lines(p, d, q, e)
+                if point is not None and on_span(p, d, s, point) and on_span(q, e, t, point):
+                    found.append(point)
+        return found
+
+    def axis_on_edge(self, pos, anchor, axis, plane=None, hit=None):
+        """Where the line from the anchor along an axis crosses a nearby edge."""
+        if not self.settings.edges:
+            return None
+        origin, direction = ray(self.view, pos)
+        direction = direction / direction.Length
+        best = None
+        for point in self.line_crossings(anchor, axis, away=True):
             if plane is not None and abs((point - plane.origin).dot(plane.normal)) > 1e-5:
                 continue
             distance = screen_distance(screen(self.view, point), pos)
@@ -817,6 +888,47 @@ class Snapper:
             if best is None or distance < best[0]:
                 best = (distance, point)
         return None if best is None else best[1]
+
+    def axis_on_guide(self, pos, anchor, axis, plane=None, hit=None):
+        """Where the line from the anchor along an axis crosses a nearby guide line."""
+        origin, direction = ray(self.view, pos)
+        direction = direction / direction.Length
+        best = None
+        for p, d, span in self.guide_lines:
+            point = closest_on_lines(anchor, geometry.unit(axis), p, d)
+            if point is None or (point - anchor).Length <= EPS or not on_span(p, d, span, point):
+                continue
+            if plane is not None and abs((point - plane.origin).dot(plane.normal)) > 1e-5:
+                continue
+            distance = screen_distance(screen(self.view, point), pos)
+            if distance > self.settings.edge_radius or not self._visible(point, hit, origin, direction):
+                continue
+            if best is None or distance < best[0]:
+                best = (distance, point)
+        return None if best is None else best[1]
+
+    def on_guide(self, pos, plane=None, hit=None):
+        """(point, direction) on the guide line or tail nearest the pointer, within the edge radius."""
+        if not self.guide_lines:
+            return None
+        origin, direction = ray(self.view, pos)
+        direction = direction / direction.Length
+        best = None
+        for p, d, span in self.guide_lines:
+            facing = d.dot(direction)
+            if 1 - facing * facing < 1e-12:
+                continue  # Seen end-on.
+            w = origin - p
+            along = (d.dot(w) - facing * direction.dot(w)) / (1 - facing * facing)
+            point = p + d * (along if span is None else min(max(along, span[0]), span[1]))
+            if plane is not None and abs((point - plane.origin).dot(plane.normal)) > 1e-5:
+                continue
+            distance = screen_distance(screen(self.view, point), pos)
+            if distance > self.settings.edge_radius or not self._visible(point, hit, origin, direction):
+                continue
+            if best is None or distance < best[0]:
+                best = (distance, point, d)
+        return None if best is None else best[1:]
 
     def _face_data(self, face):
         """(center, normal or None) of a face, measured once per snapshot.
@@ -914,7 +1026,9 @@ class Snapper:
         return {"Face center": self.settings.center_radius,
                 "Circle center": self.settings.center_radius,
                 "Midpoint": self.settings.midpoint_radius,
-                "Endpoint": self.settings.endpoint_radius}[label]
+                "Endpoint": self.settings.endpoint_radius,
+                "Guide point": self.settings.endpoint_radius,
+                "Intersection": self.settings.endpoint_radius}[label]
 
     def screen_points(self, pos, reach, plane=None):
         """(distance in pixels, point, label) of snap points within reach of the pointer."""
@@ -933,7 +1047,8 @@ class Snapper:
                 yield distance, point, label
 
     def nearby_points(self, pos, plane=None, hit=None):
-        priorities = {"Endpoint": 0, "Midpoint": 1, "Circle center": 2, "Face center": 3}
+        priorities = {"Endpoint": 0, "Guide point": 0, "Intersection": 1, "Midpoint": 1,
+                      "Circle center": 2, "Face center": 3}
         reach = max(self.settings.center_radius, self.settings.midpoint_radius, self.settings.endpoint_radius)
         candidates = [(distance, priorities.get(label, 3), point, label)
                       for distance, point, label in self.screen_points(pos, reach, plane)
@@ -1049,12 +1164,19 @@ class Snapper:
                     chosen = next((face for face in faces if hit and face.isSame(hit[1])), faces[0])
                     return Snap(point, label), self.face_plane(chosen)
                 return Snap(point, label), Plane.from_normal(point, plane.normal)
-            point = self.on_edge(pos, hit=hit)
-            if point is not None:
-                faces = self.faces_at(point)
+            found = self.edge_at(pos, hit=hit)
+            snap = None
+            if found is not None:
+                snap = Snap(found[0], "On edge", direction=straight(found[1]))
+            else:
+                found = self.on_guide(pos, hit=hit)
+                if found is not None:
+                    snap = Snap(found[0], "On guide", direction=found[1])
+            if snap is not None:
+                faces = self.faces_at(snap.point)
                 chosen = next((face for face in faces if hit and face.isSame(hit[1])), faces[0] if faces else None)
-                return Snap(point, "On edge"), (self.face_plane(chosen) if chosen is not None
-                                                else Plane.from_normal(point, plane.normal))
+                return snap, (self.face_plane(chosen) if chosen is not None
+                              else Plane.from_normal(snap.point, plane.normal))
         return self.snap(pos, plane, enabled=enabled), plane
 
     def line_axis(self, pos, plane, anchor, fixed=False):
@@ -1109,10 +1231,13 @@ class Snapper:
             name = next(name for name, direction in AXES if (axis - direction).Length < EPS)
             point = None if screen_distance(screen(self.view, anchor), pos) <= 2 else axis_point(self.view, pos, anchor, axis)
             if point is not None and enabled:
-                crossing = self.axis_on_edge(pos, anchor, axis, plane if fixed else None,
-                                             pick(self.view, self.doc, pos, face_only=True))
+                hit = pick(self.view, self.doc, pos, face_only=True)
+                crossing = self.axis_on_edge(pos, anchor, axis, plane if fixed else None, hit)
                 if crossing is not None:
                     return Snap(crossing, name + " axis on edge", name), plane
+                crossing = self.axis_on_guide(pos, anchor, axis, plane if fixed else None, hit)
+                if crossing is not None:
+                    return Snap(crossing, name + " axis on guide", name), plane
             return Snap(anchor if point is None else point, name + " axis locked", name), plane
         hit = pick(self.view, self.doc, pos, face_only=True)
         hovered = next((face for face in faces if hit and face.isSame(hit[1])), None)
@@ -1136,10 +1261,16 @@ class Snapper:
                 crossing = self.axis_on_edge(pos, anchor, direction, plane if fixed else None, hit)
                 if crossing is not None:
                     return Snap(crossing, inferred.axis + " axis on edge", inferred.axis), plane
+                crossing = self.axis_on_guide(pos, anchor, direction, plane if fixed else None, hit)
+                if crossing is not None:
+                    return Snap(crossing, inferred.axis + " axis on guide", inferred.axis), plane
                 return inferred, plane
-            point = self.on_edge(pos, plane if fixed else None, hit)
-            if point is not None:
-                return Snap(point, "On edge"), plane
+            found = self.edge_at(pos, plane if fixed else None, hit)
+            if found is not None:
+                return Snap(found[0], "On edge", direction=straight(found[1])), plane
+            found = self.on_guide(pos, plane if fixed else None, hit)
+            if found is not None:
+                return Snap(found[0], "On guide", direction=found[1]), plane
         return self.snap(pos, plane, anchor, enabled, infer_axes=False), plane
 
     def snap(self, pos, plane, anchor=None, enabled=True, axis=None, spatial=False, infer_axes=True):
@@ -1169,9 +1300,12 @@ class Snapper:
                 if ((candidate - anchor).Length > EPS and
                         screen_distance(screen(self.view, candidate), pos) <= self.settings.axis_radius * 2 / 3):
                     return Snap(candidate, ("XYZ"[i] + " axis") if spatial else ("Plane U" if i == 0 else "Plane V"))
-        edge_point = self.on_edge(pos, None if spatial else plane, hit)
-        if edge_point is not None:
-            return Snap(edge_point, "On edge")
+        found = self.edge_at(pos, None if spatial else plane, hit)
+        if found is not None:
+            return Snap(found[0], "On edge", direction=straight(found[1]))
+        found = self.on_guide(pos, None if spatial else plane, hit)
+        if found is not None:
+            return Snap(found[0], "On guide", direction=found[1])
         if hit and (spatial or abs((hit[2] - plane.origin).dot(plane.normal)) <= 1e-5):
             return Snap(on_face(hit[1], hit[2]) if spatial else plane.project(hit[2]), "Face")
         return Snap(point, "Plane")

@@ -37,7 +37,7 @@ def run(screenshots=False):
             Gui.getMainWindow().activateWindow(); c.focus_view(); flush()
             widget = QtWidgets.QApplication.focusWidget()
             assert widget is not None
-            key(widget, QtCore.Qt.Key_T, "t")
+            key(widget, QtCore.Qt.Key_Q, "q")
         else: Gui.runCommand("SimpleCAD_Rotate")
         flush()
         assert c.tool == "Rotate" and c.rotate_session is not None

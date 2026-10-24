@@ -92,7 +92,7 @@ def run(screenshot=None):
         count, before = doc.UndoCount, drawn()
         c.focus_view()
         keys("2")
-        assert QtWidgets.QApplication.focusWidget() == c.controls.value
+        assert c.size_input.owns(QtWidgets.QApplication.focusWidget())  # the width box in the view
         keys("5")
         assert [text for text, _ in shown()] == ["25.00 mm", "%.2f mm" % height], shown()
         keys(", 1")
@@ -131,7 +131,7 @@ def run(screenshot=None):
             count, before = doc.UndoCount, drawn()
             c.focus_view()
             keys(typed[0])
-            assert QtWidgets.QApplication.focusWidget() == c.controls.value
+            assert c.size_input.owns(QtWidgets.QApplication.focusWidget())  # the size box in the view
             keys(typed[1:])
             assert [text for text, _ in shown()] == [label], (tool, shown())
             assert drawn() == before and doc.UndoCount == count

@@ -35,13 +35,17 @@ steps, options, keys and a short clip.
 
 ### First five minutes
 
-1. Switch to the SimpleCAD workbench (pick **SimpleCAD** in the workbench list on the toolbar, or choose **View → Workbench → SimpleCAD**) and click **Rectangle**. A document is created if needed. Click a first corner in the 3D view, press **Tab**, type `40, 30`, and press **Enter**. Click **Fit All** if the rectangle extends out of view.
+1. Switch to the SimpleCAD workbench (pick **SimpleCAD** in the workbench list on the toolbar, or choose **View → Workbench → SimpleCAD**) and click **Rectangle**. A document is created if needed. Click a first corner in the 3D view, press **Tab** and type `40, 30`: the width and height go into two boxes on the rectangle's sides, and the comma moves from one to the other. Press **Enter**. Click **Fit All** if the rectangle extends out of view.
 2. Press **P** with the view focused. Click the rectangle, press **Tab**, enter `20`, and press **Enter**. You now have a 40 × 30 × 20 mm solid.
 3. Press **P** again and drag its top face. Release to finish. A short click also starts a click–move–click interaction. **Esc** cancels without changing geometry.
 4. Press **R** and draw a smaller rectangle entirely inside the top face. It divides the top face into its own region. Press **P**, click that smaller rectangle, and enter `-5` to make a pocket. Positive distances make a boss. A negative distance exactly equal to the thickness makes a through-hole. Going farther extends the profile past the opposite face while keeping that face intact.
 5. Select the solid, press **C**, click a base point, press **X**, then **Tab**, enter `60`, and press **Enter** to place an independent copy. Try **M** to move it, **Delete** to remove it, and **⌘Z** to undo.
 
-The status bar shows the active inference and live size. Exact inputs accept units: `2 cm`, `1 in`, or `40 mm, 30 mm`. Bare numbers are millimeters. Rectangle dimensions are signed distances along the plane's two axes. While you draw a Rectangle, its width and height are also shown beside its first two sides, outside the rectangle; typing `25, 15` shows each value there as you type it, until you move the pointer or press **Enter**. Line and Move/Copy lengths follow the current direction; move the pointer first or lock X/Y/Z before typing.
+**Typing a size.** After the first click of a tool, press **Tab**, or just start typing a number with the pointer over the 3D view. A box opens in the view where the size is shown: on each side of a Rectangle (width, then height), on the length or radius label of a Line, Circle, Polygon or Sphere, and beside the pointer for Push/Pull, Move, Copy and the other tools. **Tab** and **Shift+Tab**, or a comma, move between a Rectangle's two boxes. An empty box shows the current size. **Enter** applies the typed value and **Esc** cancels the tool. The value also appears in the field on the right of the status bar, which accepts typing too.
+
+![Width and height boxes on the sides of a rectangle being drawn, with 40 and 30 typed](images/size-boxes.png)
+
+The status bar shows the active inference and live size. Exact inputs accept units: `2 cm`, `1 in`, or `40 mm, 30 mm`. Bare numbers are millimeters. Rectangle dimensions are signed distances along the plane's two axes. While you draw a Rectangle, its width and height are also shown beside its first two sides, outside the rectangle, and its size boxes open on those labels. Line and Move/Copy lengths follow the current direction; move the pointer first or lock X/Y/Z before typing.
 
 While drawing a Rectangle, Circle, Polygon, Arc, 2 Point Arc, Sphere or Line, the arrow keys choose the plane, as in SketchUp: **→** the plane facing the red X axis (YZ), **←** the plane facing the green Y axis (XZ), **↑** the ground, facing the blue Z axis (XY). **↓**, or the same arrow again, returns to Auto. The plane passes through the point you start from, so a vertical rectangle can start on a box's top face, and pressing an arrow after the first click turns the preview about that point. After a Line's first click the arrows lock its direction to X, Y or Z instead, like the letter keys. The plane selector shows the choice, which lasts for that drawing tool.
 
@@ -95,7 +99,7 @@ conversion.
 
 1. Click **Circle** in the toolbar or press **O** with the 3D view focused.
 2. Click its center. In **Draw: Plane → Auto**, hover a flat face to draw on its plane, or snap to a free line endpoint or midpoint at any height. In empty space, a snapped point uses an XY-oriented plane through that point. Unsnapped empty-space drawing uses global XY. Choose **XY/XZ/YZ** before the first click for a specific global plane.
-3. Move the pointer to preview the circle and its radius, then click to finish. Alternatively, press **Tab**, type a positive radius such as `5` or `1 cm`, and press **Enter**. Radius is half the diameter: `5` creates a circle 10 mm across. You can type the radius immediately after the center click. The radius is shown beside the radius line, such as **R 12.00 mm**; a typed radius shows there instead until you move the pointer, and the circle changes only on **Enter**.
+3. Move the pointer to preview the circle and its radius, then click to finish. Alternatively, press **Tab**, type a positive radius such as `5` or `1 cm`, and press **Enter**. Radius is half the diameter: `5` creates a circle 10 mm across. You can type the radius immediately after the center click. The radius is shown beside the radius line, such as **R 12.00 mm**; a typed radius goes in a box there, and the circle changes only on **Enter**.
 4. Press **P** and pull the filled circle into a cylinder. On an existing solid face, a positive pull adds a round boss; an inward push creates a pocket; stopping exactly on the opposite face creates a through-hole.
 
 For flat drawing, the plane stays fixed after choosing the center. With **Snap** on, both clicks can capture vertices, edge midpoints and face centers on that plane, using the same visible guides as Line. A flat circle drawn on existing geometry must fit on one flat surface of it. It may cross lines and regions drawn there earlier, and then divides each region it crosses. Curved-face circles use the surface drawing behavior described above. It divides that face into the circular region and its surroundings immediately, preserving the original object and its total area/volume. This works on solids, sheets, triangles, and open surfaces. A circle in empty space creates a standalone filled disk.
@@ -109,7 +113,7 @@ To make an opening, press **S**, click **inside** the circular region, then pres
 1. Click **Polygon** in the toolbar, or press **G** with the 3D view focused.
 2. Set **Sides** in the bottom status bar: **3** for a triangle, **5** for a pentagon, **6** for a hexagon, etc. The range is **3–100**, initially 6; the count is remembered during the current FreeCAD session.
 3. Choose **Draw: Plane** for a flat polygon or **Draw: Surface** to follow a CAD face. In Plane mode, Auto uses a flat face, a view-facing plane over curved geometry, or XY in empty space; XY/XZ/YZ choose a fixed plane.
-4. Move the pointer to position a **vertex**. This sets both size and orientation. Changing Sides updates the preview immediately. Click again to finish, or press **Tab**, enter a positive **radius** such as `5 mm` or `1 cm`, and press **Enter**. Exact radius preserves the pointer's orientation; without pointer movement, a vertex follows the plane's default horizontal direction. The radius is shown beside the line from the center to the vertex, such as **R 20.00 mm**; a typed radius shows there until you move the pointer.
+4. Move the pointer to position a **vertex**. This sets both size and orientation. Changing Sides updates the preview immediately. Click again to finish, or press **Tab**, enter a positive **radius** such as `5 mm` or `1 cm`, and press **Enter**. Exact radius preserves the pointer's orientation; without pointer movement, a vertex follows the plane's default horizontal direction. The radius is shown beside the line from the center to the vertex, such as **R 20.00 mm**; a typed radius goes in a box there.
 5. Use **Push/Pull** on the filled polygon, or **Delete** its face. On an existing face the polygon is a native region sharing edges with its surroundings; in empty space it becomes a standalone filled face.
 
 Radius is the distance from the center to a **vertex**, not to an edge. Polygons are regular: all sides and interior angles are equal. Endpoint, midpoint and face-center snaps use the same labeled guides as Circle; Snap can be turned off. The drawing plane stays fixed after the center click. A polygon started on a face must fit on that flat surface. It may cross regions drawn there earlier, dividing each one; oversized or hole-crossing profiles are rejected without leaving an overlay.
@@ -120,7 +124,7 @@ Radius is the distance from the center to a **vertex**, not to an edge. Polygons
 
 1. Click **Sphere** on the drawing toolbar, or press **B** with the 3D view focused.
 2. Click its **center** on the drawing plane or an existing face. Endpoint, midpoint and face-center snaps use the existing labeled guides. Choose XY, XZ or YZ before the first click for a fixed plane; Auto uses the hovered flat face, a view-facing plane on a curved surface, or XY in empty space.
-3. Move the pointer to preview the **radius**, then click to finish. Alternatively press **Tab**, enter a positive radius such as `5 mm` or `1 cm`, and press **Enter**. **Esc** cancels. The sizing plane stays fixed after the center click. The radius is shown beside the radius line, such as **R 7.00 mm**; a typed radius shows there until you move the pointer.
+3. Move the pointer to preview the **radius**, then click to finish. Alternatively press **Tab**, enter a positive radius such as `5 mm` or `1 cm`, and press **Enter**. **Esc** cancels. The sizing plane stays fixed after the center click. The radius is shown beside the radius line, such as **R 7.00 mm**; a typed radius goes in a box there.
 
 A sphere is a complete, smooth native solid extending in every direction from its center. Its three-circle wire preview does not change the saved geometry. Placing the center on a face leaves half the sphere on each side of that face. It creates a separate **Sphere** object; use **Union** to join intersecting solids when desired. Move, Copy, Slice, visibility, color/opacity and locks use the existing tools. Push/Pull and face subdivision still require a flat face.
 
@@ -391,7 +395,7 @@ Preview transforms cached display geometry without rebuilding the solid for ever
 ### Rotate objects
 
 1. Select one or more objects, or click a face/edge belonging to them. Rotate acts on each **whole object**.
-2. Click **Rotate** beside Move, or press **T** with the 3D view focused. R remains Rectangle.
+2. Click **Rotate** beside Move, or press **Q** with the 3D view focused, as in SketchUp. R remains Rectangle.
 3. Choose **X / Y / Z — world** for a fixed global direction, **Object main axis** for the shape's long direction, or **Object X / Y / Z — local** for its own placement axes. A colored arrow and ring show the chosen axis.
 4. Choose the center: **Selection center — together**, **Each object's center**, or **World origin — 0, 0, 0**. Choosing an object axis initially selects each object's center. You can change it afterward.
 5. Drag the angle slider, use the ±45°/±90° buttons, or type an exact angle such as `37.5°`, `-90`, or `1.57 rad`. Bare numbers mean degrees. The slider covers −180° to +180°; typed angles may go beyond this range. Reset returns to the starting orientation.
@@ -428,7 +432,7 @@ Plain Part shapes and STL meshes are copied as plain geometry, without links to 
 ### Loft
 
 1. Select **two or more profiles in order**: circle/rectangle/polygon face objects, individual flat faces, or connected wire outlines. Use Ctrl/Cmd to add to the selection.
-2. Press **Q** or choose **Loft**. Use **Move up/down** to adjust the displayed order.
+2. Press **Shift+Q** or choose **Loft**. Use **Move up/down** to adjust the displayed order.
 3. Leave **Create a closed solid** checked for closed profiles. Uncheck it to create a surface, including between open profiles.
 4. Choose smooth transitions (default) or **Straight transitions / ruled**, inspect the preview, then **Apply**.
 
@@ -639,6 +643,22 @@ Press **Z** or click **Measure**, then click what to measure. Nothing in the mod
 
 The results appear in a small panel and as an orange dimension in the view, with arrowheads at both ends. **Place** lets you move the dimension off the part, as in SketchUp: move the pointer to offset it, with extension lines back to the measured points, and click to leave it there. Placed dimensions stay visible while you go on editing, keep their arrow size as you zoom, and do not change the model; **Clear placed** removes them. **Copy** puts the results on the clipboard. **Esc**, a right-click or **Close** ends Measure. AI clients can use the same measurements through the `measure` MCP tool.
 
+### Measure Tape and guides
+
+**Measure Tape** works like SketchUp's Tape Measure: it leaves dashed guides that drawing snaps to, so you can draw at an exact distance from an edge without extra geometry.
+
+1. Press **T** or click **Measure Tape**.
+2. Click an edge, away from its ends and middle. Move the pointer to the side the guide should go; the tape measures straight out from the edge, and a dashed guide parallel to it follows.
+3. Type the distance, such as **15**, and press **Enter**, or click to place the guide where the pointer is.
+4. Measure from more edges, then press **Esc**.
+5. Press **L** and draw: the line snaps along a guide (**On guide**) and to where guides cross edges or each other (**Intersection**).
+
+Starting on a corner, a midpoint, a face or a guide point leaves a **guide point** instead, at the typed distance toward the pointer, with a dashed tail back to the start that drawing snaps along; **X**, **Y** or **Z** keeps that measurement on a world axis. Starting on a guide line measures from the guide, so guides can be stepped out one from another.
+
+![Two dashed guides placed 15 mm and 25 mm in from the edges of a plate, and a third being measured 20 mm in from its right edge](images/measure-tape.png)
+
+Guides do not change the model. They sit in a **Guides** group on the Objects tab: hide the group to hide every guide, or select it and press **Delete** to remove them all. Click a single guide and press **Delete** to remove just that one. Each guide is its own Undo step, guides are saved with the file, and Fit All frames the model rather than the guide lines.
+
 ### Select faces from the left panel
 
 In the Model panel, choose **Faces** and expand the arrow beside a shape such as Triangle. Its children are **Face 1**, **Face 2**, and so on. Hover over a row to highlight that face in the 3D view; click to select it. A tooltip shows the surface type and area. Ctrl/⌘ adds to the selection and Shift selects a range. Selecting the parent row selects the whole shape.
@@ -842,10 +862,10 @@ See [Connect SimpleCAD to an AI client](mcp.md) for setup and the tool list.
 | Union | J | Join whole objects into one solid |
 | Move Vertex | V | Drag a corner; adjoining flat faces follow |
 | Move | M | Base point, then destination |
-| Rotate | T | Rotate about a world or object axis |
+| Rotate | Q | Rotate about a world or object axis |
 | Bend / Soft Deform | N | Move a region with falloff, or bend along an axis |
 | Scale / Stretch | K | Uniform or per-axis scaling |
-| Loft | Q | Connect profiles into a solid or surface |
+| Loft | Shift+Q | Connect profiles into a solid or surface |
 | Sweep | W | Carry a profile along a path |
 | Copy | C | Place independent copies |
 | Pattern… | — | Repeat objects in a grid, around an axis or along an edge |
@@ -874,6 +894,7 @@ See [Connect SimpleCAD to an AI client](mcp.md) for setup and the tool list.
 | --- | --- | --- |
 | Smart select | Double-click | Grow a selection into a hole, edge loop, flat region or smooth surface |
 | Measure | Z | Sizes, distances, angles and hole spacing; place dimensions in the view |
+| Measure Tape | T | Measure out from an edge or point and leave a dashed guide that drawing snaps to |
 | Curvature map | — | Colour curved faces by bend radius |
 | Isolate selection | — | Hide everything except the selection; click again to show all |
 
@@ -888,7 +909,7 @@ See [Connect SimpleCAD to an AI client](mcp.md) for setup and the tool list.
 
 #### Keys, planes and snapping
 
-**Tab** focuses the dimension field. **Enter** there commits; Line continues from the new endpoint. **Esc** ends the active tool and discards its unfinished preview. **X/Y/Z** toggle axis locks during Line, Move, Copy and Move Vertex. **⌘C**, **⌘X** and **⌘V** (Ctrl on Windows and Linux) [copy, cut and paste](#copy-cut-and-paste-objects) whole objects. S is used instead of Space because FreeCAD uses Space to toggle visibility. Single-letter shortcuts only apply inside the 3D area, so they do not interfere with typing in the console or property editor. Toolbar buttons are always available.
+**Tab**, or a typed number, opens a size box in the 3D view; in a Rectangle, **Tab** moves between its width and height boxes. **Enter** there commits; Line continues from the new endpoint. **Esc** ends the active tool and discards its unfinished preview. **X/Y/Z** toggle axis locks during Line, Move, Copy and Move Vertex. **⌘C**, **⌘X** and **⌘V** (Ctrl on Windows and Linux) [copy, cut and paste](#copy-cut-and-paste-objects) whole objects. S is used instead of Space because FreeCAD uses Space to toggle visibility. Single-letter shortcuts only apply inside the 3D area, so they do not interfere with typing in the console or property editor. Toolbar buttons are always available.
 
 In **Draw: Plane**, **Auto** starts every drawing tool at an exact endpoint, midpoint or face-center snap in 3D. A snapped point on a flat face uses that face's plane; a free point shifts the fallback drawing plane through the point. In **Draw: Plane**, without a snap, Auto uses a flat face, a view-facing plane through a curved-geometry hit, or global XY in empty space. Auto Line can continue across planes and infer world axes; when both points share a face, that face supplies the plane. After an Auto segment, the plane passes through the new endpoint. Rectangle, Circle, Arc, 2 Point Arc, Sphere and Polygon keep their plane fixed after the first click. Choose **XY**, **XZ**, or **YZ** before the first point to keep the drawing on a global plane through the origin. Orbit when a plane is edge-on. Existing navigation settings remain in effect; finish or cancel a tool before a navigation gesture that uses the left button.
 

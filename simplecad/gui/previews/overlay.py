@@ -164,6 +164,7 @@ class LengthLabel:
     """
     def __init__(self, view, parent):
         self.view = view
+        self.spot = None  # screen centre of the text while shown
         self.switch = coin.SoSwitch()
         self.switch.whichChild = coin.SO_SWITCH_NONE
         label = coin.SoSeparator()
@@ -192,11 +193,13 @@ class LengthLabel:
         middle, segment = halfway(list(points)) if text else (None, None)
         self.switch.whichChild = 0 if middle is not None else coin.SO_SWITCH_NONE
         if middle is None:
+            self.spot = None
             return
         ratio = pixel_ratio()
         x, y = beside(screen(self.view, segment[0]), screen(self.view, segment[1]),
                       screen(self.view, middle), text, ratio,
                       screen(self.view, away) if away is not None else None)
+        self.spot = (x, y)
         # SoText2 sits on its baseline: lower it to centre the digits.
         y -= 4 * ratio
         plane = Plane.from_normal(middle, self.view.getViewDirection())
@@ -271,6 +274,7 @@ class Preview:
         self.length_labels = []  # Made as shapes need them: a Rectangle shows two.
         self.lengths = []  # (polyline, own text, away point) of each labelled line
         self.length_color = LINE_COLOR
+        self.labelled = None  # called after the labels move, as by size boxes on them
         view.getSceneGraph().addChild(self.root)
 
     def update(self, polylines=(), point=None, center=None, center_snapped=False,
@@ -327,6 +331,17 @@ class Preview:
             points, own, away = self.lengths[index]
             typed = texts[index] if index < len(texts) else None
             label.update(points, typed or own, self.length_color, away)
+        # Typed text alone does not move boxes standing on the labels.
+        if self.labelled is not None and not texts:
+            self.labelled()
+
+    def label_spots(self):
+        """Screen centre of each shown size label, in the order of ``lengths``."""
+        return [label.spot for label in self.length_labels[:len(self.lengths)]]
+
+    def label_texts(self):
+        """Each labelled line's own size, in the order of ``lengths``."""
+        return [entry[1] for entry in self.lengths]
 
     def show_endpoint(self, point, snapped=False):
         """Mark the vertex under or near the pointer; drawn with the next update."""

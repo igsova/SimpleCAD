@@ -17,7 +17,7 @@ DRAW = frozenset(('Line', 'Rectangle', 'Circle', 'Arc', 'Arc2Point', 'Polygon', 
 PICK = frozenset(('PushPull', 'Offset', 'Elongate', 'VertexMove', 'Measure'))
 SMART = frozenset(('SmartSelect', 'SelectHole', 'SelectLoop', 'SelectFlat', 'SelectSmooth'))
 SURFACE = frozenset(('Imprint', 'OffsetFace', 'Shell', 'Draft', 'HealFaces', 'RemoveRounds', 'FillHole', 'Unwrap'))
-ALWAYS = DRAW | {'Select', 'Settings', 'MCP'}
+ALWAYS = DRAW | {'Select', 'Tape', 'Settings', 'MCP'}
 CLASSIFY_LIMIT = 16  # larger selections stay unclassified; invoke-time checks still apply
 # Each element lookup on a dense faceted shape rebuilds its index (about 40 ms
 # per edge and 200 ms per vertex at 22,000 faces). Such shapes come from flat
@@ -43,6 +43,7 @@ REQUIREMENTS = {
     **{key: 'No selection needed; click in the view to draw.' for key in DRAW},
     'Select': 'Click geometry or drag a selection window in the view.',
     'Measure': 'Open a CAD model, then click geometry to measure; no preselection needed.',
+    'Tape': 'No selection needed; click a point, an edge or a guide in the view.',
     'PushPull': 'Click a flat CAD face after starting, or preselect one flat face.',
     'Offset': 'Click a flat CAD face or an edge after starting, or preselect one.',
     'Elongate': 'Click a CAD face or hole rim after starting, or preselect one.',
@@ -75,7 +76,7 @@ REQUIREMENTS = {
     'FillHole': 'Select an open CAD surface object, or rim edges of the openings to fill.',
     'Unwrap': 'Select one CAD face to flatten.',
     'Curvature': 'Open a CAD model; selected objects, or all visible ones, are coloured. Click again to hide.',
-    'Delete': 'Select CAD edges, faces, or whole objects. Individual vertices cannot be deleted.',
+    'Delete': 'Select CAD edges, faces, whole objects or guides. Individual vertices cannot be deleted.',
     **{key: 'Select CAD faces or edges first; raw STL triangles need conversion.' for key in SMART},
     'Isolate': 'Select objects to isolate. Click again to restore visibility, even with nothing selected.',
     'Appearance': 'Select CAD faces or whole CAD objects first.',
@@ -115,7 +116,10 @@ class Context:
 def kind(obj):
     if obj.isDerivedFrom('Mesh::Feature'):
         return 'mesh'
-    return 'cad' if 'Shape' in obj.PropertiesList else 'other'
+    properties = obj.PropertiesList
+    if 'SC_Guide' in properties or 'SC_Guides' in properties:
+        return 'guide'  # Measure Tape's construction lines, which have no shape
+    return 'cad' if 'Shape' in properties else 'other'
 
 
 def classify(shape, name):
@@ -254,6 +258,11 @@ def reason(key, context=None):
     if not c.document:
         return 'Open a model first.'
     selected = c.selected
+    if key == 'Delete' and any(t.kind == 'guide' for t in selected):
+        # Guides delete on their own; anything else selected must be deletable too.
+        selected = tuple(t for t in selected if t.kind != 'guide')
+        if not selected:
+            return ''
     cad = bool(selected) and all(t.kind == 'cad' for t in selected)
     curved = surface_reason(key, selected) if cad else ''
     if curved:
@@ -325,7 +334,9 @@ def context_groups(context=None):
     c = current(fresh=True) if context is None else context
     if not c.selected:
         return [('Draw', ('Line', 'Rectangle', 'Circle', 'Arc', 'Arc2Point', 'Polygon', 'Sphere')),
-                ('Inspect', ('Select', 'Measure', 'Curvature', 'Isolate'))]
+                ('Inspect', ('Select', 'Measure', 'Tape', 'Curvature', 'Isolate'))]
+    if all(t.kind == 'guide' for t in c.selected):
+        return [('Modify', ('Delete',)), ('Inspect', ('Tape', 'Isolate'))]
     if all(t.kind == 'mesh' for t in c.selected):
         return [('Mesh', ('ConvertMesh', 'MeshSplit', 'MeshStretch', 'MeshRegion')),
                 ('Inspect', ('Isolate',))]
@@ -333,7 +344,7 @@ def context_groups(context=None):
         return [('Inspect', ('Isolate',))]
     names = [name for target in c.selected for name in target.names]
     modify = ['Move', 'Rotate', 'Copy', 'Pattern', 'Mirror', 'Scale']
-    inspect = ['Measure', 'Curvature', 'Isolate']
+    inspect = ['Measure', 'Tape', 'Curvature', 'Isolate']
     surface = ['Shell', 'RemoveRounds', 'FillHole']
     if names and all(n.startswith('Vertex') for n in names):
         modify = ['VertexMove', 'Deform'] + modify

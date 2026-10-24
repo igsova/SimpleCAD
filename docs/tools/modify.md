@@ -19,7 +19,7 @@ Push/Pull moves a flat face along its normal. Use it to pull a drawn outline int
 1. Click Push/Pull or press P with the 3D view focused. You can also select one flat face first.
 2. Click a flat face. A small panel opens with the distance and direction.
 3. Move the pointer along the face normal to preview the extrusion, or press and drag.
-4. Click, or release the drag, to finish. For an exact value, type it in the panel's Distance field, or press Tab and type it in the status bar, then press Enter.
+4. Click, or release the drag, to finish. For an exact value, type it in the panel's Distance field, or press Tab and type it in the box that opens beside the pointer, then press Enter.
 5. To make a through-hole, push a profile toward the far side until the amber target reads Opposite face snapped, then click.
 
 **Options**
@@ -36,7 +36,7 @@ Push/Pull moves a flat face along its normal. Use it to pull a drawn outline int
 
 | Key | What it does |
 | --- | --- |
-| <kbd>Tab</kbd> | Focus the status-bar value field to type a distance. |
+| <kbd>Tab</kbd> | Open a box beside the pointer to type a distance. |
 | <kbd>Enter</kbd> | Apply the typed distance. |
 | <kbd>Esc</kbd> | Cancel the preview without changing the model. |
 
@@ -82,7 +82,7 @@ Offset draws a parallel copy of a flat face's outline, or of a single straight e
 
 | Key | What it does |
 | --- | --- |
-| <kbd>Tab</kbd> | Focus the status-bar value field to type a distance. |
+| <kbd>Tab</kbd> | Open a box beside the pointer to type a distance. |
 | <kbd>Enter</kbd> | Apply the typed distance. |
 | <kbd>Esc</kbd> | Cancel the preview without changing the model. |
 
@@ -130,7 +130,7 @@ Elongate stretches a round hole, a hole rim or a flat face along a direction you
 
 | Key | What it does |
 | --- | --- |
-| <kbd>Tab</kbd> | Type a distance, or a distance and angle such as 8 @ 45, in the status bar. |
+| <kbd>Tab</kbd> | Type a distance, or a distance and angle such as 8 @ 45, in a box beside the pointer. |
 | <kbd>Enter</kbd> | Apply the typed value. |
 | <kbd>Esc</kbd> | Cancel the preview without changing the model. |
 
@@ -447,7 +447,7 @@ Move slides whole objects from a base point to a destination. Both points snap t
 | Key | What it does |
 | --- | --- |
 | <kbd>X</kbd> / <kbd>Y</kbd> / <kbd>Z</kbd> | Lock or unlock movement along that world axis. |
-| <kbd>Tab</kbd> | Focus the status-bar value field to type a distance. |
+| <kbd>Tab</kbd> | Open a box beside the pointer to type a distance. |
 | <kbd>Enter</kbd> | Move by the typed distance along the locked axis, or along the current pointer direction. |
 | <kbd>Esc</kbd> | Cancel without moving anything. |
 
@@ -465,7 +465,7 @@ Move slides whole objects from a base point to a destination. Both points snap t
 
 Rotate turns whole objects around a world axis or one of the object's own axes. A panel previews the angle before anything changes.
 
-![](../../Resources/icons/rotate.svg){ .tool-icon } Modify toolbar · Shortcut <kbd>T</kbd> · MCP `simplecad_rotate`
+![](../../Resources/icons/rotate.svg){ .tool-icon } Modify toolbar · Shortcut <kbd>Q</kbd> · MCP `simplecad_rotate`
 { .tool-facts }
 
 <figure class="tool-clip">
@@ -476,7 +476,7 @@ Rotate turns whole objects around a world axis or one of the object's own axes. 
 **Steps**
 
 1. Select one or more objects.
-2. Click Rotate or press T with the 3D view focused. A colored arrow and ring show the axis.
+2. Click Rotate or press Q with the 3D view focused. A colored arrow and ring show the axis.
 3. Choose the axis and the center to rotate around.
 4. Drag the angle slider, click a preset, or type an exact angle such as 37.5 or -90.
 5. Click Apply or press Enter to keep the rotation.
@@ -608,7 +608,7 @@ Scale / Stretch resizes whole objects by factors. Keep X, Y and Z linked for a u
 
 Loft connects two or more profiles, in order, into a new solid or surface. Use it for shapes that change cross-section along their length, such as a vase or a duct transition.
 
-![](../../Resources/icons/loft.svg){ .tool-icon } Modify toolbar · Shortcut <kbd>Q</kbd> · MCP `simplecad_loft`
+![](../../Resources/icons/loft.svg){ .tool-icon } Modify toolbar · Shortcut <kbd>Shift</kbd>+<kbd>Q</kbd> · MCP `simplecad_loft`
 { .tool-facts }
 
 <figure class="tool-clip">
@@ -619,7 +619,7 @@ Loft connects two or more profiles, in order, into a new solid or surface. Use i
 **Steps**
 
 1. Select two or more profiles in the order to connect them: circle, rectangle or polygon faces, flat faces, or connected outlines. Hold Ctrl or Cmd to add to the selection.
-2. Click Loft or press Q. The panel lists the profiles and the preview appears.
+2. Click Loft or press Shift+Q. The panel lists the profiles and the preview appears.
 3. Use Move up and Move down to fix the order if needed.
 4. Choose smooth or straight (ruled) transitions, and a solid or a surface.
 5. Click Apply.
@@ -723,7 +723,7 @@ Copy places an independent copy of the selected objects, using the same base poi
 | Key | What it does |
 | --- | --- |
 | <kbd>X</kbd> / <kbd>Y</kbd> / <kbd>Z</kbd> | Lock or unlock the copy direction to that world axis. |
-| <kbd>Tab</kbd> | Focus the status-bar value field to type a distance. |
+| <kbd>Tab</kbd> | Open a box beside the pointer to type a distance. |
 | <kbd>Enter</kbd> | Place the copy at the typed distance. |
 | <kbd>Esc</kbd> | Cancel without copying. |
 

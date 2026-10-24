@@ -83,7 +83,7 @@ Line draws connected straight segments, one per click. It follows the world X, Y
 | --- | --- |
 | <kbd>X</kbd> / <kbd>Y</kbd> / <kbd>Z</kbd> | Lock the next segment to that world axis; press the same key again to unlock. The lock resets after each segment. |
 | <kbd>→ ← ↑ ↓</kbd> | Before the first click, choose the plane: → YZ, ← XZ, ↑ XY, ↓ Auto. After it, lock the direction to X, Y or Z, like the letter keys. |
-| <kbd>Tab</kbd> | Focus the status-bar field to type a length, such as 20 or 2 cm. A negative length reverses the direction. |
+| <kbd>Tab</kbd> | Open a box on the length label to type a length, such as 20 or 2 cm. Typing a number opens it too. A negative length reverses the direction. |
 | <kbd>Enter</kbd> | Add the typed segment and continue from its end. |
 | <kbd>Esc</kbd> | Finish the line. Every clicked segment stays; only the unfinished preview is discarded. |
 | <kbd>⌘Z</kbd> | End the line and undo the last segment, one segment at a time. |
@@ -131,7 +131,7 @@ Rectangle draws a filled rectangular face from two opposite corners. Use it as a
 | Key | What it does |
 | --- | --- |
 | <kbd>→ ← ↑ ↓</kbd> | Choose the plane: → YZ, ← XZ, ↑ XY, ↓ back to Auto. The plane passes through the point you start from; after the first click the preview turns about that point. |
-| <kbd>Tab</kbd> | Type width, height, such as 40, 30 or 4 cm, 3 cm. Negative values extend the other way along the plane's axes. |
+| <kbd>Tab</kbd> | Open a width and a height box on the rectangle's sides. Type width, height, such as 40, 30 or 4 cm, 3 cm; the comma, or Tab, moves to the height box. Negative values extend the other way along the plane's axes. |
 | <kbd>Enter</kbd> | Create the rectangle with the typed size. |
 | <kbd>Esc</kbd> | Cancel the unfinished rectangle. |
 
@@ -411,5 +411,6 @@ Draw tools, Snap in the status bar
 - After the first click, Rectangle, Circle, Arc, 2 Point Arc, Sphere and Polygon accept only points on their plane. Line in Auto can snap to points anywhere in 3D.
 - Targets on the far side of a part are not hidden, so a hidden corner or face center can be caught and can even choose the drawing plane. Orbit so the point you want faces you, and check the snap label before you click.
 - Two lines from a corner to the face center and on to an edge midpoint close a triangle; the first line stays loose until the second closes the region.
+- Guides left by [Measure Tape](inspect.md#tape) are targets too: along a guide line or a guide point's tail (On guide), at a guide point (Guide point), and where a guide crosses an edge or another guide (Intersection).
 
-**See also:** [Line](#line) · [Circle](#circle) · [Settings](panels.md#settings) · [Push/Pull](modify.md#pushpull)
+**See also:** [Line](#line) · [Circle](#circle) · [Measure Tape](inspect.md#tape) · [Settings](panels.md#settings) · [Push/Pull](modify.md#pushpull)

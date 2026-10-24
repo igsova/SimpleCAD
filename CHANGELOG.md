@@ -3,6 +3,41 @@
 Notable changes to SimpleCAD. Restart FreeCAD after updating to load new
 commands, and reconnect an MCP client to refresh its tool list.
 
+## Unreleased
+
+### Added
+
+- **Measure Tape** (**T**) works like SketchUp's Tape Measure. Click an edge,
+  move out from it and type a distance: a dashed guide line is left parallel
+  to the edge at that distance. Starting on a corner or a face leaves a guide
+  point instead, with a dashed tail back to the start. Drawing tools snap
+  along guides and tails, to guide points and to where guides cross edges or
+  each other. Guides never change the model and sit in a Guides group, where
+  they can be hidden or deleted; Fit All ignores them.
+
+### Changed
+
+- **Rotate** moves to **Q** and **Loft** to **Shift+Q**, so **T** can start
+  Measure Tape. T and Q now match SketchUp.
+
+- Sizes are typed in the 3D view. After the first click, press **Tab** or
+  just start typing: a box opens on the size label beside the shape. A
+  Rectangle gets a width and a height box on its sides, and **Tab**,
+  **Shift+Tab** or a comma move between them. Tools without a size label,
+  such as Push/Pull and Move, open the box beside the pointer. Tab used to
+  move the keyboard to a small field in the status bar, which still shows
+  the value and still accepts typing.
+
+### Fixed
+
+- Moving the pointer while the drawing plane is edge-on no longer fills the
+  Report view with red "Plane is edge-on" errors. The hint shows in the
+  status bar instead.
+- Undo (**⌘Z**, or **Ctrl+Z** on Windows and Linux) right after a click,
+  while Line, Measure Tape or another drawing tool is still open, no longer
+  crashes FreeCAD. The tool ends and the Undo goes ahead, as when **Esc** is
+  pressed first.
+
 ## 0.38.3
 
 ### Fixed

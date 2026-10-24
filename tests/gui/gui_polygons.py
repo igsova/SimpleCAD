@@ -40,8 +40,9 @@ def run(screenshots=False):
 
     def exact(text):
         key(QtCore.Qt.Key_Tab)
-        assert QtWidgets.QApplication.focusWidget() == c.controls.value
-        c.controls.value.setText(text); key(QtCore.Qt.Key_Return, field=c.controls.value)
+        box = QtWidgets.QApplication.focusWidget()
+        assert c.size_input.owns(box)  # the size box in the view
+        box.insert(text); key(QtCore.Qt.Key_Return, field=box)
 
     assert 'SimpleCAD_Polygon' in Gui.listCommands()
     assert not QtGui.QIcon(str(ROOT / 'Resources/icons/polygon.svg')).pixmap(56, 56).isNull()

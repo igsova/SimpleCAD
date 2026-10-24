@@ -32,8 +32,9 @@ def run(screenshot=None):
         for kind in (QtCore.QEvent.ShortcutOverride,QtCore.QEvent.KeyPress,QtCore.QEvent.KeyRelease):
             QtWidgets.QApplication.sendEvent(focus,QtGui.QKeyEvent(kind,key,QtCore.Qt.NoModifier,text))
     def exact(text):
-        key(QtCore.Qt.Key_Tab);assert QtWidgets.QApplication.focusWidget()==c.controls.value
-        c.controls.value.setText(text);key(QtCore.Qt.Key_Return,field=c.controls.value)
+        key(QtCore.Qt.Key_Tab);box=QtWidgets.QApplication.focusWidget()
+        assert c.size_input.owns(box)  # the size box in the view
+        box.insert(text);key(QtCore.Qt.Key_Return,field=box)
     def select(obj,name):
         Gui.Selection.clearSelection();Gui.Selection.addSelection(obj,name)
         Gui.runCommand('SimpleCAD_Offset',0)
