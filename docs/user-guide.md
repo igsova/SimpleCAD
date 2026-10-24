@@ -573,6 +573,9 @@ the object stays exactly as it was and the status bar says why.
 - **Remove rounds…**: finds rounded edges (fillets) up to the largest radius you
   enter, outside (convex), inside (concave) or both, highlights them, and removes
   them so the corners are sharp again. Select faces first to search only those.
+  Only rounds go: a removal that would also take a wall or floor next to them,
+  as can happen in a rounded pocket, is refused for that round. Rounds that
+  stay, untouched or rebuilt around a neighbour, are counted as not removed.
 - **Fill hole…**: closes the openings of an open surface, all of them or those
   whose rim edges you select. Curved openings get a patch that blends smoothly
   into the faces around it; flat openings get a flat face, keeping flat islands

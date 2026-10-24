@@ -26,6 +26,16 @@ def notched_box():
     return block.makeFillet(1, outer)
 
 
+def rounded_pocket():
+    """A block with a pocket whose corners and rim are rounded."""
+    block = Part.makeBox(40, 30, 20).cut(Part.makeBox(20, 8, 10, V(10, 11, 10)))
+    inside = [e for e in block.Edges if abs(e.BoundBox.ZLength - 10) < 1e-6 and 1 < e.BoundBox.XMin < 39]
+    block = block.makeFillet(1, inside)
+    rim = [e for e in block.Edges if abs(e.BoundBox.ZMin - 20) < 1e-6 and e.BoundBox.ZLength < 1e-6
+           and e.BoundBox.XMin > 1 and e.BoundBox.XMax < 39]
+    return block.makeFillet(.5, rim)
+
+
 def font():
     return se.default_font() or None
 
@@ -89,6 +99,20 @@ class RoundTests(unittest.TestCase):
         part = Part.makeBox(20, 20, 10).cut(Part.makeCylinder(3, 10, V(10, 10, 0)))
         self.assertEqual(se.find_rounds(part, 10), [])
         self.assertEqual(se.find_rounds(Part.makeCylinder(2, 5), 10), [])
+
+    def test_rounds_of_a_pocket_leave_the_pocket_and_are_counted_as_they_end(self):
+        # Removed in one call, these rounds take the whole pocket with them.
+        # One at a time the pocket stays; the four corner rounds of its rim
+        # are rebuilt rather than removed, and the report says so (#6).
+        part = rounded_pocket()
+        rounds = [r['index'] for r in se.find_rounds(part, 3)]
+        self.assertEqual(len(rounds), 12)
+        healed, report = se.remove_faces(part, rounds, keep_others=True)
+        self.assertTrue(healed.isValid())
+        self.assertAlmostEqual(healed.Volume, 40 * 30 * 20 - 20 * 8 * 10, delta=1)
+        left = len(se.find_rounds(healed, 3))
+        self.assertGreater(left, 0)
+        self.assertEqual((report['removed'], report['failed']), (12 - left, left))
 
     def test_found_rounds_can_be_removed(self):
         part = notched_box()

@@ -27,6 +27,13 @@ commands, and reconnect an MCP client to refresh its tool list.
   overlapping face, or were refused when started on the face.
 - An arc whose ends lie on a face but which bulges beside it no longer
   divides the face along its chord.
+- **Remove rounds** counts only the rounds it actually removed. The kernel can
+  return a valid solid with some rounds left, or rebuilt around a neighbour;
+  those were counted as removed. What is left is now tried again one round at
+  a time and counted as failed if it stays. (#6)
+- **Remove rounds** no longer fills a rounded pocket. Removing all its rounds
+  in one kernel call could take the pocket's walls and floor too. A removal
+  that would take a face that is not a round is now refused for that round.
 
 ## 0.39.0
 

@@ -164,7 +164,7 @@ EDGE = text('Native edge name from inspect_elements.', pattern=r'^Edge[1-9][0-9]
 tool('find_rounds', 'List the rounds (fillet faces) of a solid up to max_radius mm, with each face name, radius and whether it is convex (outside) or concave (inside). Optional faces limits the search. Changes nothing; use remove_rounds to remove them.',
      {'object': NAME, 'max_radius': number(minimum=.000001), 'convexity': enum('any','convex','concave'), 'faces': array(FACE, 0, 2000)},
      ('object','max_radius'), document=True)
-tool('remove_rounds', 'Remove the rounds found by find_rounds (same arguments) so their corners become sharp again: the neighbouring faces grow until they meet. Rounds that cannot heal stay and are counted as failed. Runs in an isolated worker; one Undo step.',
+tool('remove_rounds', 'Remove the rounds found by find_rounds (same arguments) so their corners become sharp again: the neighbouring faces grow until they meet. Rounds that cannot heal, or whose removal would also take a face that is not a round, stay and are counted as failed. Runs in an isolated worker; one Undo step.',
      {'object': NAME, 'max_radius': number(minimum=.000001), 'convexity': enum('any','convex','concave'), 'faces': array(FACE, 0, 2000)},
      ('object','max_radius'), edit=True, destructive=True)
 tool('heal_faces', 'Delete faces of a closed solid, such as a boss, pocket or round, and grow the neighbouring faces until the solid closes again. Faces that cannot heal stay and are counted as failed. Runs in an isolated worker; one Undo step.',

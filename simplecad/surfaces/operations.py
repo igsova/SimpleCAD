@@ -86,7 +86,8 @@ def remove_rounds(obj, max_radius, convexity='any', names=(), dialog=None):
     if not found:
         raise ValueError('No %srounds up to %s found.' % ('' if convexity == 'any' else convexity + ' ',
                                                          geo_length(max_radius)))
-    result, report = shape_jobs.run('remove_faces', shape, {'faces': [r['index'] for r in found]},
+    # Rounds only: a pocket whose rounds are removed keeps its walls and floor.
+    result, report = shape_jobs.run('remove_faces', shape, {'faces': [r['index'] for r in found], 'keep_others': True},
                                     label='Removing %d round%s' % (len(found), '' if len(found) == 1 else 's'),
                                     dialog=dialog)
     report['found'] = len(found)
