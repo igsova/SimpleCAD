@@ -37,6 +37,22 @@ class MeshConversionTests(unittest.TestCase):
         self.assertAlmostEqual(curved[0].Surface.Radius, 6, places=5)
         self.assertAlmostEqual(result.Volume, body.Volume, delta=1e-2)
 
+    def test_stepped_bore_keeps_its_narrow_middle(self):
+        # Equal counterbores at both ends are not one through hole: the wall
+        # between them is narrower, and that material must stay.
+        body = Part.makeBox(60, 60, 40)
+        for z in (0, 32):
+            body = body.cut(Part.makeCylinder(15, 8, App.Vector(30, 30, z)))
+        body = body.cut(Part.makeCylinder(11, 40, App.Vector(30, 30, 0)))
+        result, report = convert(mesh(body), tolerance=.1)
+        self.assertTrue(result.isValid() and result.isClosed())
+        self.assertTrue(result.isInside(App.Vector(30, 43, 20), 1e-6, False))
+        self.assertAlmostEqual(result.Volume, body.Volume, delta=body.Volume * 1e-3)
+        radii = sorted(round(face.Surface.Radius, 3) for face in result.Faces
+                       if isinstance(face.Surface, Part.Cylinder))
+        self.assertEqual(radii, [11, 15, 15])
+        self.assertEqual(report['analytic_holes'], 3)
+
     def test_noisy_flat_regions_rebuild_as_six_editable_faces(self):
         original = mesh(Part.makeBox(20,30,40))
         points, triangles = original.Topology

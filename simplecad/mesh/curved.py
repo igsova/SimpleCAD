@@ -164,6 +164,18 @@ def _has_cylindrical_wall(data, first, second, tolerance):
     side &= np.max(np.abs(radial_distance[indices] - first['radius']), axis=1) <= max(tolerance * 3, first['radius'] * .003)
     if int(side.sum()) < 8:
         return False
+    # The wall must run the whole way from rim to rim. Counterbores of the
+    # same radius at both ends of a narrower bore also have side triangles at
+    # that radius, but solid material between them, which a through hole
+    # would cut away.
+    spans = axial[indices[side]]
+    starts, ends = spans.min(axis=1), spans.max(axis=1)
+    order = np.argsort(starts)
+    starts, reach = starts[order], np.maximum.accumulate(ends[order])
+    gap = tolerance * 3
+    if (starts[0] > gap or reach[-1] < distance - gap
+            or bool(np.any(starts[1:] > reach[:-1] + gap))):
+        return False
     selected = np.mod(np.arctan2(radial[indices[side]] @ np.asarray(tuple(_basis(np.asarray(tuple(axis)))[1])),
                                  radial[indices[side]] @ np.asarray(tuple(_basis(np.asarray(tuple(axis)))[0]))), 2 * math.pi)
     angles = np.unique(np.round(np.sort(selected.ravel()), 8))

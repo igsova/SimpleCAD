@@ -3,6 +3,16 @@
 Notable changes to SimpleCAD. Restart FreeCAD after updating to load new
 commands, and reconnect an MCP client to refresh its tool list.
 
+## Unreleased
+
+### Fixed
+
+- **Make mesh editable** with smooth surfaces off no longer cuts a stepped
+  bore into one straight hole. Equal counterbores at both ends of a narrower
+  hole were taken for a single through hole, which removed the material
+  between them without a warning. Each section now becomes its own analytic
+  hole. (#4)
+
 ## 0.39.0
 
 ### Added
