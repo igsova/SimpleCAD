@@ -105,7 +105,7 @@ Measure Tape measures out from an edge or a point and leaves a dashed guide ther
 3. Click to place the guide, or type the distance and press Enter.
 4. Measure again from another edge, or press Esc to finish.
 
-To leave a guide point instead of a line, start on a corner, a midpoint, a face or a guide point. The tape then measures from that point to the pointer, and the guide point goes where you click or at the distance you type, toward the pointer.
+To leave a guide point instead of a line, start on a corner, a midpoint, a face or a guide point. The tape then measures from that point to the pointer, and the guide point goes where you click or at the distance you type, toward the pointer. A dashed tail runs from the start to the guide point, as in SketchUp, and drawing snaps along it. Type 0 to leave a guide point on the start itself, without a tail.
 
 **Keys**
 
@@ -118,7 +118,7 @@ To leave a guide point instead of a line, start on a corner, a midpoint, a face 
 
 **Notes**
 
-- Drawing tools snap to guides: along a guide line (**On guide**), to a guide point (**Guide point**), and where a guide crosses an edge or another guide (**Intersection**).
+- Drawing tools snap to guides: along a guide line or a guide point's tail (**On guide**), to a guide point (**Guide point**), and where a guide crosses an edge or another guide (**Intersection**).
 - Guides are construction, not geometry. They never change the model, and modeling tools, selection windows and exports pass them by. Fit All frames the model, not the guide lines.
 - Each guide is one Undo step. The guides are kept in a **Guides** group on the Objects tab: hide the group to hide them all, or select it and press Delete to remove them all. Click a single guide and press Delete to remove just that one.
 - Guides are saved with the model. FreeCAD without SimpleCAD opens the file but cannot show them.

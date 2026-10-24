@@ -2,7 +2,9 @@
 
 From an edge or a guide line the tape measures straight out from it and
 leaves a guide line parallel to it; from any other point it measures to the
-pointer and leaves a guide point. A typed distance places the guide exactly.
+pointer and leaves a guide point, with a dashed tail back to the start that
+drawing snaps along. A typed distance places the guide exactly; 0 leaves a
+guide point at the start, without a tail.
 Guides are construction, not geometry: drawing snaps to them, and the model
 itself is never changed.
 """
@@ -60,9 +62,7 @@ class TapeInput:
 
     def commit(self):
         c = self.c
-        if self.along is None and (self.end - c.anchor).Length < geo.EPS:
-            raise ValueError('Choose a different point to measure to.')
-        guides.add(c.doc, self.end, self.along)
+        guides.add(c.doc, self.end, self.along, c.anchor)
         distance = (self.end - c.anchor).Length
         # Ready for the next measurement, which can snap to this guide.
         from ..snapping import Snapper

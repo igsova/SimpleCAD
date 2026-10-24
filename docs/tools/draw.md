@@ -411,6 +411,6 @@ Draw tools, Snap in the status bar
 - After the first click, Rectangle, Circle, Arc, 2 Point Arc, Sphere and Polygon accept only points on their plane. Line in Auto can snap to points anywhere in 3D.
 - Targets on the far side of a part are not hidden, so a hidden corner or face center can be caught and can even choose the drawing plane. Orbit so the point you want faces you, and check the snap label before you click.
 - Two lines from a corner to the face center and on to an edge midpoint close a triangle; the first line stays loose until the second closes the region.
-- Guides left by [Measure Tape](inspect.md#tape) are targets too: along a guide line (On guide), at a guide point (Guide point), and where a guide crosses an edge or another guide (Intersection).
+- Guides left by [Measure Tape](inspect.md#tape) are targets too: along a guide line or a guide point's tail (On guide), at a guide point (Guide point), and where a guide crosses an edge or another guide (Intersection).
 
 **See also:** [Line](#line) · [Circle](#circle) · [Measure Tape](inspect.md#tape) · [Settings](panels.md#settings) · [Push/Pull](modify.md#pushpull)

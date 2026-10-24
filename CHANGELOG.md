@@ -10,10 +10,10 @@ commands, and reconnect an MCP client to refresh its tool list.
 - **Measure Tape** (**T**) works like SketchUp's Tape Measure. Click an edge,
   move out from it and type a distance: a dashed guide line is left parallel
   to the edge at that distance. Starting on a corner or a face leaves a guide
-  point instead. Drawing tools snap along guides, to guide points and to
-  where guides cross edges or each other. Guides never change the model and
-  sit in a Guides group, where they can be hidden or deleted; Fit All ignores
-  them.
+  point instead, with a dashed tail back to the start. Drawing tools snap
+  along guides and tails, to guide points and to where guides cross edges or
+  each other. Guides never change the model and sit in a Guides group, where
+  they can be hidden or deleted; Fit All ignores them.
 
 ### Changed
 

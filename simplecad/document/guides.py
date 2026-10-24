@@ -13,12 +13,18 @@ GROUP_MARK = 'SC_Guides'
 
 
 class Guide:
-    """Proxy of a guide: the Point it passes through and, for a line, its Direction."""
+    """Proxy of a guide: the Point it passes through and, for a line, its Direction.
+
+    A guide point also keeps the Start the tape measured it from, and shows a
+    dashed tail back to it.
+    """
     def __init__(self, obj):
         obj.Proxy = self
         obj.addProperty('App::PropertyVector', 'Point', 'Guide', 'A point the guide passes through')
         obj.addProperty('App::PropertyVector', 'Direction', 'Guide',
                         'Direction of a guide line; zero for a guide point')
+        obj.addProperty('App::PropertyVector', 'Start', 'Guide',
+                        "Where a guide point's dashed tail starts; the Point itself for none")
         obj.addProperty('App::PropertyBool', MARK, 'Guide', 'Marks a SimpleCAD guide')
         obj.setEditorMode(MARK, 2)
 
@@ -53,6 +59,14 @@ def line(obj):
     return geo.V(obj.Point), (geo.unit(direction) if direction.Length > geo.EPS else None)
 
 
+def tail(obj):
+    """Where a guide point's dashed tail starts, or None for a guide line or a point without one."""
+    if line(obj)[1] is not None or not _has(obj, 'Start'):
+        return None
+    start = geo.V(obj.Start)
+    return start if (start - geo.V(obj.Point)).Length > geo.EPS else None
+
+
 def shown(obj):
     if not App.GuiUp:
         return True
@@ -61,10 +75,10 @@ def shown(obj):
 
 
 def visible(doc):
-    """(point, direction or None) of each guide shown in the document."""
+    """(point, direction or None, tail start or None) of each guide shown in the document."""
     for obj in doc.Objects:
         if is_guide(obj) and shown(obj) and all(shown(parent) for parent in obj.InList if is_group(parent)):
-            yield line(obj)
+            yield line(obj) + (tail(obj),)
 
 
 def group(doc):
@@ -78,8 +92,8 @@ def group(doc):
     return found
 
 
-def add(doc, point, direction=None):
-    """Add a guide line through a point, or a guide point, in one Undo step."""
+def add(doc, point, direction=None, start=None):
+    """Add a guide line through a point, or a guide point with a tail from start, in one Undo step."""
     from .operations import transaction
     point = geo.V(point)
     if direction is not None:
@@ -91,6 +105,7 @@ def add(doc, point, direction=None):
         Guide(obj)
         obj.Point = point
         obj.Direction = direction if direction is not None else geo.V()
+        obj.Start = geo.V(start) if start is not None and direction is None else point
         obj.Label = 'Guide' if direction is not None else 'Guide point'
         group(doc).addObject(obj)
         if App.GuiUp:

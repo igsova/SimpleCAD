@@ -204,6 +204,11 @@ def closest_on_lines(p, d, q, e):
     return (first + second) * .5 if (first - second).Length <= 1e-6 * scale else None
 
 
+def on_span(p, d, span, point):
+    """Whether a point on the guide through p along d lies within its span; None is endless."""
+    return span is None or span[0] - EPS <= (point - p).dot(d) <= span[1] + EPS
+
+
 def axis_point(view, pos, anchor, direction):
     """Closest point on an anchor axis to the cursor ray, also in perspective.
 
@@ -638,7 +643,9 @@ class ObjectSnaps:
 
 
 class Snapper:
-    guide_lines = ()  # (point, unit direction) of each shown guide line
+    # (point, unit direction, span) of each shown guide line. A span is the
+    # (first, last) distance along a guide point's tail; None is endless.
+    guide_lines = ()
 
     def __init__(self, doc, view, exclude=(), settings=None, collect=True):
         self.settings = settings or preferences.load()
@@ -685,11 +692,13 @@ class Snapper:
         self._collected = self.faces
 
         self.index_segments()
-        for point, direction in guides.visible(doc):
-            if direction is None:
-                self.points.append((point, "Guide point"))
-            else:
-                self.guide_lines.append((point, direction))
+        for point, direction, start in guides.visible(doc):
+            if direction is not None:
+                self.guide_lines.append((point, direction, None))
+                continue
+            self.points.append((point, "Guide point"))
+            if start is not None:
+                self.guide_lines.append((start, geometry.unit(point - start), (0.0, (point - start).Length)))
         self.points.extend((point, "Intersection") for point in self.crossings())
 
     def index_segments(self, edges=()):
@@ -853,13 +862,13 @@ class Snapper:
         return found
 
     def crossings(self):
-        """Where guide lines cross edges and each other."""
-        found = [point for anchor, direction in self.guide_lines
-                 for point in self.line_crossings(anchor, direction)]
-        for i, (p, d) in enumerate(self.guide_lines):
-            for q, e in self.guide_lines[i + 1:]:
+        """Where guide lines and tails cross edges and each other."""
+        found = [point for anchor, direction, span in self.guide_lines
+                 for point in self.line_crossings(anchor, direction) if on_span(anchor, direction, span, point)]
+        for i, (p, d, s) in enumerate(self.guide_lines):
+            for q, e, t in self.guide_lines[i + 1:]:
                 point = closest_on_lines(p, d, q, e)
-                if point is not None:
+                if point is not None and on_span(p, d, s, point) and on_span(q, e, t, point):
                     found.append(point)
         return found
 
@@ -885,9 +894,9 @@ class Snapper:
         origin, direction = ray(self.view, pos)
         direction = direction / direction.Length
         best = None
-        for p, d in self.guide_lines:
+        for p, d, span in self.guide_lines:
             point = closest_on_lines(anchor, geometry.unit(axis), p, d)
-            if point is None or (point - anchor).Length <= EPS:
+            if point is None or (point - anchor).Length <= EPS or not on_span(p, d, span, point):
                 continue
             if plane is not None and abs((point - plane.origin).dot(plane.normal)) > 1e-5:
                 continue
@@ -899,18 +908,19 @@ class Snapper:
         return None if best is None else best[1]
 
     def on_guide(self, pos, plane=None, hit=None):
-        """(point, direction) on the guide line nearest the pointer, within the edge radius."""
+        """(point, direction) on the guide line or tail nearest the pointer, within the edge radius."""
         if not self.guide_lines:
             return None
         origin, direction = ray(self.view, pos)
         direction = direction / direction.Length
         best = None
-        for p, d in self.guide_lines:
+        for p, d, span in self.guide_lines:
             facing = d.dot(direction)
             if 1 - facing * facing < 1e-12:
                 continue  # Seen end-on.
             w = origin - p
-            point = p + d * ((d.dot(w) - facing * direction.dot(w)) / (1 - facing * facing))
+            along = (d.dot(w) - facing * direction.dot(w)) / (1 - facing * facing)
+            point = p + d * (along if span is None else min(max(along, span[0]), span[1]))
             if plane is not None and abs((point - plane.origin).dot(plane.normal)) > 1e-5:
                 continue
             distance = screen_distance(screen(self.view, point), pos)

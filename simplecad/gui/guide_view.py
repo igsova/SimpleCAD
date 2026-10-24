@@ -1,4 +1,4 @@
-"""How guides look: long dashed lines, and small crosses at guide points.
+"""How guides look: long dashed lines, and crosses at guide points with dashed tails.
 
 Fit All frames the model, not the guides: FreeCAD leaves a skip-bounding
 group out of the bounds while it fits the view. At other times the group
@@ -93,12 +93,13 @@ class GuideView:
         except (AttributeError, ReferenceError, RuntimeError):
             return
         if direction is None:
-            self.nodes.set(points=[point])
+            start = guides.tail(obj)
+            self.nodes.set([[start, point]] if start is not None else [], points=[point])
         else:
             self.nodes.set(lines=[(point, direction)])
 
     def updateData(self, obj, prop):
-        if prop in ('Point', 'Direction'):
+        if prop in ('Point', 'Direction', 'Start'):
             self.update(obj)
 
     def getDisplayModes(self, vobj):

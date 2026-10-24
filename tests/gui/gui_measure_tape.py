@@ -102,16 +102,19 @@ def run(screenshot=None):
         assert abs(block.Shape.Volume - volume) < 1e-9 and len(doc.Objects) == 3, doc.Objects
         App.Console.PrintMessage("PASS: from an edge, 25 mm typed leaves a parallel guide line in one Undo step\n")
 
-        # From a corner, the tape measures to the pointer and leaves a guide point.
+        # From a corner, the tape measures to the pointer and leaves a guide point,
+        # with a dashed tail back to the corner.
         c.click(pos(V(100, 100, 100)))
         assert c.tape_input.along is None and close(c.anchor, V(100, 100, 100))
-        c.motion(pos(V(100, 100, 50)))
-        keys("40\r", start_in_view=True)
+        c.motion(pos(V(100, 120, 100)))
+        keys("30\r", start_in_view=True)
         found = guide_objects()
         point, direction = guides.line(found[-1])
-        assert len(found) == 2 and direction is None and close(point, V(100, 100, 60)), (found, point, direction)
+        assert len(found) == 2 and direction is None and close(point, V(100, 130, 100)), (found, point, direction)
+        assert close(guides.tail(found[-1]), V(100, 100, 100)), guides.tail(found[-1])
+        assert found[-1].ViewObject.Proxy.nodes.lines.numVertices.getNum() == 1
         assert found[-1].Label == "Guide point" and doc.UndoCount == count + 2
-        App.Console.PrintMessage("PASS: from a corner, 40 mm typed leaves a guide point toward the pointer\n")
+        App.Console.PrintMessage("PASS: from a corner, 30 mm typed leaves a guide point with a tail toward the pointer\n")
 
         # A second guide from the far top edge, then the tape snaps to the first guide.
         c.click(pos(V(30, 100, 100)))
@@ -146,9 +149,11 @@ def run(screenshot=None):
         # Lines snap to guides, guide points and where guides cross edges and each other.
         c.start("Line")
         for target, expected in ((V(75, 80, 100), "Intersection"), (V(75, 100, 100), "Intersection"),
-                                 (V(100, 100, 60), "Guide point")):
+                                 (V(100, 130, 100), "Guide point")):
             label, point = hover(target)
             assert label == expected and close(point, target), (label, point, target)
+        label, point = hover(V(100, 115, 100))
+        assert label == "On guide" and abs(point.x - 100) < 1e-6 and abs(point.z - 100) < 1e-6, (label, point)
         c.click(pos(V(75, 80, 100)))
         assert close(c.anchor, V(75, 80, 100)), c.anchor
         c.motion(pos(V(76, 50, 100)))
@@ -161,7 +166,7 @@ def run(screenshot=None):
         assert any({V(*a).sub(V(75, 80, 100)).Length < 1e-6, V(*b).sub(end).Length < 1e-6} == {True}
                    or {V(*b).sub(V(75, 80, 100)).Length < 1e-6, V(*a).sub(end).Length < 1e-6} == {True}
                    for a, b in ends), ends
-        App.Console.PrintMessage("PASS: Line snaps to guide crossings, guide points and along a guide\n")
+        App.Console.PrintMessage("PASS: Line snaps to guide crossings, guide points, tails and along a guide\n")
 
         # Guides are not geometry: no snap target, shape or selection window includes them.
         assert not any(guides.is_guide(obj) or guides.is_group(obj) for obj in snap_targets(doc, ()))
@@ -199,6 +204,7 @@ def run(screenshot=None):
         reopened = guide_objects()
         assert len(reopened) == 3 and all(obj.ViewObject.Proxy is not None for obj in reopened), reopened
         assert any(abs(guides.line(obj)[0].x - 75) < 1e-6 for obj in reopened)
+        assert any(guides.tail(obj) is not None for obj in reopened)
         view = Gui.activeDocument().activeView()
         App.Console.PrintMessage("PASS: guides are saved and reopened with the model\n")
 

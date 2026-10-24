@@ -37,7 +37,7 @@ class GuideSnappingTests(unittest.TestCase):
         self.snapper = Snapper(SimpleNamespace(Objects=[]), self.camera)
         self.edge = Part.makeLine(V(40, -20, 0), V(40, 20, 0))
         self.snapper.index_segments([self.edge])
-        self.snapper.guide_lines = [(V(0, 10, 0), V(1, 0, 0)), (V(25, 0, 0), V(0, 1, 0))]
+        self.snapper.guide_lines = [(V(0, 10, 0), V(1, 0, 0), None), (V(25, 0, 0), V(0, 1, 0), None)]
         self.plane = g.Plane.named("XY")
         for target, kwargs in (("simplecad.gui.snapping.ray", {'side_effect': self.camera.ray}),
                                ("simplecad.gui.snapping.pick", {'return_value': None})):
@@ -54,6 +54,21 @@ class GuideSnappingTests(unittest.TestCase):
         for expected in (V(40, 10, 0), V(25, 10, 0)):
             self.assertTrue(any((point - expected).Length < 1e-9 for point in found), (expected, found))
         self.assertEqual(len(found), 2, found)
+
+    def test_a_guide_points_tail_is_a_guide_only_along_its_length(self):
+        # A tail from (30, -5) to (50, -5) crosses the edge at x=40; one from (30, 5)
+        # to (35, 5) stops short of it, and neither reaches back to the guide at x=25.
+        self.snapper.guide_lines = [(V(30, -5, 0), V(1, 0, 0), (0.0, 20.0)), (V(30, 5, 0), V(1, 0, 0), (0.0, 5.0)),
+                                    (V(25, 0, 0), V(0, 1, 0), None)]
+        found = self.snapper.crossings()
+        self.assertEqual(len(found), 1, found)
+        self.assertLess((found[0] - V(40, -5, 0)).Length, 1e-9)
+        snap, _ = self.snapper.snap_start(self.screen(V(45, -5, 0), 0, 3), self.plane)
+        self.assertEqual(snap.label, "On guide")
+        self.assertAlmostEqual(snap.point.y, -5, places=9)
+        self.assertLess((snap.direction - V(1, 0, 0)).Length, 1e-12)
+        snap, _ = self.snapper.snap_start(self.screen(V(70, -5, 0), 0, 3), self.plane)
+        self.assertNotEqual(snap.label, "On guide")
 
     def test_a_line_lands_exactly_on_a_guide_and_follows_an_axis_onto_it(self):
         snap, _ = self.snapper.snap_line(self.screen(V(10, 10, 0), 0, 5), self.plane, V(-20, -30, 0), [])
@@ -84,8 +99,8 @@ class GuideDocumentTests(unittest.TestCase):
         return [obj for obj in self.doc.Objects if guides.is_guide(obj)]
 
     def test_guides_have_no_shape_and_share_one_group(self):
-        line = guides.add(self.doc, V(1, 2, 3), V(0, 0, 4))
-        point = guides.add(self.doc, V(5, 5, 5))
+        line = guides.add(self.doc, V(1, 2, 3), V(0, 0, 4), V(9, 9, 9))
+        point = guides.add(self.doc, V(5, 5, 5), start=V(5, 5, 0))
         group = next(obj for obj in self.doc.Objects if guides.is_group(obj))
         self.assertEqual(sorted(obj.Name for obj in group.Group), sorted([line.Name, point.Name]))
         self.assertFalse(any(hasattr(obj, "Shape") for obj in (line, point, group)))
@@ -94,6 +109,9 @@ class GuideDocumentTests(unittest.TestCase):
         self.assertEqual(len(shown), 2)
         self.assertLess((shown[0][1] - V(0, 0, 1)).Length, 1e-12)
         self.assertIsNone(shown[1][1])
+        # A guide point has a tail back to where the tape started; a line has none.
+        self.assertEqual((shown[0][2], shown[1][2]), (None, V(5, 5, 0)))
+        self.assertIsNone(guides.tail(guides.add(self.doc, V(1, 1, 1), start=V(1, 1, 1))))
         with self.assertRaises(ValueError):
             guides.add(self.doc, V(), V())
 

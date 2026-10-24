@@ -653,7 +653,7 @@ The results appear in a small panel and as an orange dimension in the view, with
 4. Measure from more edges, then press **Esc**.
 5. Press **L** and draw: the line snaps along a guide (**On guide**) and to where guides cross edges or each other (**Intersection**).
 
-Starting on a corner, a midpoint, a face or a guide point leaves a **guide point** instead, at the typed distance toward the pointer; **X**, **Y** or **Z** keeps that measurement on a world axis. Starting on a guide line measures from the guide, so guides can be stepped out one from another.
+Starting on a corner, a midpoint, a face or a guide point leaves a **guide point** instead, at the typed distance toward the pointer, with a dashed tail back to the start that drawing snaps along; **X**, **Y** or **Z** keeps that measurement on a world axis. Starting on a guide line measures from the guide, so guides can be stepped out one from another.
 
 ![Two dashed guides placed 15 mm and 25 mm in from the edges of a plate, and a third being measured 20 mm in from its right edge](images/measure-tape.png)
 
