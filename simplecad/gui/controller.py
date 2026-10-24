@@ -252,19 +252,24 @@ class Controller(QtCore.QObject):
         if not quiet:
             self.message("Select · R Rectangle · O Circle · B Sphere · G Polygon · L Line · P Push/Pull · F Round edges · Y Fit Circle/Cylinder · M Move · Q Rotate · C Copy · X Elongate · T Measure Tape")
 
-    def check_context(self):
+    def check_context(self, end=None):
+        """End the tool when its document, view or source changed under it.
+
+        A given end is called instead of ending the tool.
+        """
         if not self.tool:
             return
+        end = end or self.cancel
         try:
             if App.ActiveDocument != self.doc or Gui.activeDocument().activeView() != self.view:
-                self.cancel()
+                end()
             elif self.tool in ("Rectangle", "Circle", "Offset", "Elongate", "Arc", "Arc2Point", "Sphere", "Polygon", "Line", "Tape", "VertexMove", "PushPull", "Round", "Slice", "MeshSplit", "MeshStretch", "MeshRegion", "Rotate", "Subdivide", "Scale", "Loft", "Sweep", "Deform") and self.doc.UndoCount != self.line_undo_count:
                 # Menu/toolbar Undo invalidates cached anchors, faces and
                 # opposite-face contact, just as the keyboard shortcut does.
-                self.cancel()
+                end()
             elif self.tool == "VertexMove" and self.anchor is not None:
                 if not self.obj.Shape.isEqual(self.vertex_neighborhood.shape):
-                    self.cancel()
+                    end()
             elif self.offset_input is not None:
                 self.offset_input.check()
             elif self.elongate_input is not None:
@@ -288,7 +293,7 @@ class Controller(QtCore.QObject):
             elif self.subdivide_session is not None:
                 ops.check_subdivision(self.subdivide_session.target)
         except (RuntimeError, ReferenceError, AttributeError, ValueError):
-            self.cancel()
+            end()
 
     def selected(self):
         return list(dict.fromkeys(item.Object for item in Gui.Selection.getSelectionEx()
@@ -825,8 +830,13 @@ class Controller(QtCore.QObject):
             return
         if not self.tool:
             return
-        self.check_context()
-        if not self.tool:
+        changed = []
+        self.check_context(lambda: changed.append(True))
+        if changed:
+            # Ending the tool takes its preview out of the scene graph, which
+            # Coin is walking to deliver this event: after Undo with the tool
+            # still open, doing it now crashes FreeCAD. End it just after.
+            QtCore.QTimer.singleShot(0, self.check_context)
             return
         event = callback.getEvent()
         pos = tuple(event.getPosition().getValue())

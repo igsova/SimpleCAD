@@ -33,6 +33,10 @@ commands, and reconnect an MCP client to refresh its tool list.
 - Moving the pointer while the drawing plane is edge-on no longer fills the
   Report view with red "Plane is edge-on" errors. The hint shows in the
   status bar instead.
+- Undo (**⌘Z**, or **Ctrl+Z** on Windows and Linux) right after a click,
+  while Line, Measure Tape or another drawing tool is still open, no longer
+  crashes FreeCAD. The tool ends and the Undo goes ahead, as when **Esc** is
+  pressed first.
 
 ## 0.38.3
 
