@@ -252,7 +252,7 @@ A closed single-shell surface is converted to a valid solid as part of the pull,
 
 Press **S** to select, click the middle of an edge in the 3D view, then press **Delete** or **Backspace**. The SimpleCAD trash button performs the same action on the selection.
 
-- If the edge divides two faces in the same plane, those faces merge. Other divisions remain in place and the solid keeps its volume.
+- If the edge divides two faces in the same plane, those faces merge. Other divisions remain in place and the solid keeps its volume. Other lines between the two faces, such as the remaining sides of a rectangle when you delete one side, stay as loose lines on the merged face, as in SketchUp.
 - A model edited before 20 October 2026 can hold a hairline step, a wall less than 0.005 mm tall, where a Push/Pull stopped just short of the face beside it. On screen it is one line. Deleting that line folds the step away and merges the faces instead of opening the solid.
 - Matching edges in separate visible objects are erased together, so one Delete reaches every adjoining face. Flat faces merge even when they were stored separately.
 - A line between flush tops of two separate solids, such as regions of a sheet pulled up one at a time to the same height, joins the solids into the selected one, and the tops merge. The wall that stood between them goes with it; their other divisions stay.

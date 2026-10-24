@@ -1098,11 +1098,14 @@ def delete_selection(selection):
             combined.extend(group)
             groups.remove(group)
         groups.append(combined)
-    planned = []
+    planned, lines = [], []
     for group in groups:
         obj, names = group[0]
         if len(group) == 1:
-            planned.append((obj, geo.erase_elements(obj.Shape, names) if names else None))
+            result = geo.erase_elements(obj.Shape, names) if names else None
+            planned.append((obj, result))
+            lines.extend(merged_lines(obj.Shape, result, [obj.Shape.getElement(name) for name in names
+                                                         if name.startswith("Edge")]))
             continue
         members = [member.Shape for member, _ in group]
         solids = [shape for shape in members if shape.Solids]
@@ -1124,6 +1127,7 @@ def delete_selection(selection):
                  for i, part in enumerate(getattr(shape, kind + "s"))
                  if next(selected_lookup.matches(part), None) is not None]
         result = geo.erase_elements(shape, names)
+        lines.extend(merged_lines(shape, result, [part for part in selected if part.ShapeType == "Edge"]))
         # Retain a referenced object's identity where possible.
         # A solid's object keeps its identity over a surface split off it,
         # and the selected solid over one joined to it.
@@ -1132,8 +1136,31 @@ def delete_selection(selection):
                       next((member for member in solid if member in chosen), solid[0] if solid else obj))
         planned.append((keeper, result))
         planned.extend((member, None) for member, _ in group if member != keeper)
-    apply_plan(doc, planned, "Delete")
+    apply_plan(doc, planned, "Delete", lines)
     return len(planned), ignored_seams
+
+
+def merged_lines(before, after, erased):
+    """Lines of before that a merge of faces left inside a face of after.
+
+    Deleting one line between two faces merges them, and the other lines
+    between them no longer bound anything. As in SketchUp they stay, as loose
+    lines on the merged face.
+    """
+    if after is None or not after.Faces or not erased:
+        return []
+    survived = coinc.Index(after.Edges)
+    faces, edges = Part.makeCompound(after.Faces), Part.makeCompound(after.Edges)
+    kept = []
+    for edge in coinc.unique(before.Edges):
+        if (edge.Length < geo.EPS or next(survived.matches(edge), None) is not None
+                or any(coinc.same(edge, gone) for gone in erased)):
+            continue
+        middle = Part.Vertex(edge.valueAt(edge.getParameterByLength(edge.Length / 2)))
+        # On a face, and not along an edge left there, such as a merged boundary.
+        if middle.distToShape(faces)[0] <= 1e-6 and middle.distToShape(edges)[0] > 0.01:
+            kept.append(edge)
+    return kept
 
 
 def merges_with(obj, edges, other, other_names):
@@ -1164,7 +1191,7 @@ def flush_across(shape, edge, other, other_edge):
                for first, a in flat(shape, edge) for second, b in flat(other, other_edge))
 
 
-def apply_plan(doc, planned, title):
+def apply_plan(doc, planned, title, lines=()):
     deleted = {obj.Name for obj, result in planned if result is None}
     for obj, result in planned:
         if result is None and any(parent.Name not in deleted for parent in obj.InList):
@@ -1177,6 +1204,13 @@ def apply_plan(doc, planned, title):
                 doc.removeObject(obj.Name)
             else:
                 obj.Shape = result
+        if lines:
+            line = doc.addObject("Part::Feature", "SimpleShape")
+            line.Label = "Line"
+            line.Shape = coinc.assemble([], lines)
+            if App.GuiUp:
+                line.ViewObject.LineColor = (0.15, 0.23, 0.29)
+                line.ViewObject.LineWidth = 2.0
 
 
 def heal_dangling_wires(doc, objects=None):

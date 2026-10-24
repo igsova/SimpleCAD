@@ -13,6 +13,13 @@ commands, and reconnect an MCP client to refresh its tool list.
   alone: both lost their top and the wall under the line, leaving open
   shells.
 
+### Changed
+
+- Deleting one line between two faces merges them and keeps the other lines
+  that ran between them as loose lines on the merged face, as in SketchUp.
+  Deleting one side of a rectangle drawn on a face leaves its other three
+  sides. They used to be erased with it.
+
 ## 0.39.1
 
 ### Fixed
