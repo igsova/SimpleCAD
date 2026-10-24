@@ -395,7 +395,7 @@ Preview transforms cached display geometry without rebuilding the solid for ever
 ### Rotate objects
 
 1. Select one or more objects, or click a face/edge belonging to them. Rotate acts on each **whole object**.
-2. Click **Rotate** beside Move, or press **T** with the 3D view focused. R remains Rectangle.
+2. Click **Rotate** beside Move, or press **Q** with the 3D view focused, as in SketchUp. R remains Rectangle.
 3. Choose **X / Y / Z — world** for a fixed global direction, **Object main axis** for the shape's long direction, or **Object X / Y / Z — local** for its own placement axes. A colored arrow and ring show the chosen axis.
 4. Choose the center: **Selection center — together**, **Each object's center**, or **World origin — 0, 0, 0**. Choosing an object axis initially selects each object's center. You can change it afterward.
 5. Drag the angle slider, use the ±45°/±90° buttons, or type an exact angle such as `37.5°`, `-90`, or `1.57 rad`. Bare numbers mean degrees. The slider covers −180° to +180°; typed angles may go beyond this range. Reset returns to the starting orientation.
@@ -432,7 +432,7 @@ Plain Part shapes and STL meshes are copied as plain geometry, without links to 
 ### Loft
 
 1. Select **two or more profiles in order**: circle/rectangle/polygon face objects, individual flat faces, or connected wire outlines. Use Ctrl/Cmd to add to the selection.
-2. Press **Q** or choose **Loft**. Use **Move up/down** to adjust the displayed order.
+2. Press **Shift+Q** or choose **Loft**. Use **Move up/down** to adjust the displayed order.
 3. Leave **Create a closed solid** checked for closed profiles. Uncheck it to create a surface, including between open profiles.
 4. Choose smooth transitions (default) or **Straight transitions / ruled**, inspect the preview, then **Apply**.
 
@@ -643,6 +643,22 @@ Press **Z** or click **Measure**, then click what to measure. Nothing in the mod
 
 The results appear in a small panel and as an orange dimension in the view, with arrowheads at both ends. **Place** lets you move the dimension off the part, as in SketchUp: move the pointer to offset it, with extension lines back to the measured points, and click to leave it there. Placed dimensions stay visible while you go on editing, keep their arrow size as you zoom, and do not change the model; **Clear placed** removes them. **Copy** puts the results on the clipboard. **Esc**, a right-click or **Close** ends Measure. AI clients can use the same measurements through the `measure` MCP tool.
 
+### Measure Tape and guides
+
+**Measure Tape** works like SketchUp's Tape Measure: it leaves dashed guides that drawing snaps to, so you can draw at an exact distance from an edge without extra geometry.
+
+1. Press **T** or click **Measure Tape**.
+2. Click an edge, away from its ends and middle. Move the pointer to the side the guide should go; the tape measures straight out from the edge, and a dashed guide parallel to it follows.
+3. Type the distance, such as **15**, and press **Enter**, or click to place the guide where the pointer is.
+4. Measure from more edges, then press **Esc**.
+5. Press **L** and draw: the line snaps along a guide (**On guide**) and to where guides cross edges or each other (**Intersection**).
+
+Starting on a corner, a midpoint, a face or a guide point leaves a **guide point** instead, at the typed distance toward the pointer; **X**, **Y** or **Z** keeps that measurement on a world axis. Starting on a guide line measures from the guide, so guides can be stepped out one from another.
+
+![Two dashed guides placed 15 mm and 25 mm in from the edges of a plate, and a third being measured 20 mm in from its right edge](images/measure-tape.png)
+
+Guides do not change the model. They sit in a **Guides** group on the Objects tab: hide the group to hide every guide, or select it and press **Delete** to remove them all. Click a single guide and press **Delete** to remove just that one. Each guide is its own Undo step, guides are saved with the file, and Fit All frames the model rather than the guide lines.
+
 ### Select faces from the left panel
 
 In the Model panel, choose **Faces** and expand the arrow beside a shape such as Triangle. Its children are **Face 1**, **Face 2**, and so on. Hover over a row to highlight that face in the 3D view; click to select it. A tooltip shows the surface type and area. Ctrl/⌘ adds to the selection and Shift selects a range. Selecting the parent row selects the whole shape.
@@ -846,10 +862,10 @@ See [Connect SimpleCAD to an AI client](mcp.md) for setup and the tool list.
 | Union | J | Join whole objects into one solid |
 | Move Vertex | V | Drag a corner; adjoining flat faces follow |
 | Move | M | Base point, then destination |
-| Rotate | T | Rotate about a world or object axis |
+| Rotate | Q | Rotate about a world or object axis |
 | Bend / Soft Deform | N | Move a region with falloff, or bend along an axis |
 | Scale / Stretch | K | Uniform or per-axis scaling |
-| Loft | Q | Connect profiles into a solid or surface |
+| Loft | Shift+Q | Connect profiles into a solid or surface |
 | Sweep | W | Carry a profile along a path |
 | Copy | C | Place independent copies |
 | Pattern… | — | Repeat objects in a grid, around an axis or along an edge |
@@ -878,6 +894,7 @@ See [Connect SimpleCAD to an AI client](mcp.md) for setup and the tool list.
 | --- | --- | --- |
 | Smart select | Double-click | Grow a selection into a hole, edge loop, flat region or smooth surface |
 | Measure | Z | Sizes, distances, angles and hole spacing; place dimensions in the view |
+| Measure Tape | T | Measure out from an edge or point and leave a dashed guide that drawing snaps to |
 | Curvature map | — | Colour curved faces by bend radius |
 | Isolate selection | — | Hide everything except the selection; click again to show all |
 

@@ -8,7 +8,7 @@ import FreeCADGui as Gui
 from pivy import coin
 
 from ..core import geometry as geo, preferences
-from ..document import operations as ops
+from ..document import guides, operations as ops
 from . import clipboard, snapping
 from .snapping import Snapper, pick, ray, screen, pull_drag, snap_pull, shared_picks
 from .previews.overlay import Preview, edges, outline
@@ -37,6 +37,7 @@ class Controller(QtCore.QObject):
         self.active = False
         self.tool = None
         self.arc_input = None
+        self.tape_input = None
         self.offset_input = None
         self.elongate_input = None
         self.push_pull_input = None
@@ -156,7 +157,7 @@ class Controller(QtCore.QObject):
                 ops.heal_dangling_elongations(App.ActiveDocument)
             except Exception:
                 pass
-        self.message("R Rectangle · O Circle · B Sphere · G Polygon · L Line · P Push/Pull · F Round edges · Y Fit Circle/Cylinder · M Move · T Rotate · C Copy · S Select")
+        self.message("R Rectangle · O Circle · B Sphere · G Polygon · L Line · P Push/Pull · F Round edges · Y Fit Circle/Cylinder · M Move · Q Rotate · C Copy · T Measure Tape · S Select")
 
     def deactivate(self):
         self.cancel(quiet=True)
@@ -224,6 +225,9 @@ class Controller(QtCore.QObject):
         if self.preview is not None:
             self.preview.close()
             self.preview = None
+        if self.tape_input is not None:
+            self.tape_input.close()
+            self.tape_input = None
         self.tool = None
         self.arc_input = None
         self.pull_references = None
@@ -246,7 +250,7 @@ class Controller(QtCore.QObject):
         if self.controls:
             self.controls.clear()
         if not quiet:
-            self.message("Select · R Rectangle · O Circle · B Sphere · G Polygon · L Line · P Push/Pull · F Round edges · Y Fit Circle/Cylinder · M Move · T Rotate · C Copy · X Elongate")
+            self.message("Select · R Rectangle · O Circle · B Sphere · G Polygon · L Line · P Push/Pull · F Round edges · Y Fit Circle/Cylinder · M Move · Q Rotate · C Copy · X Elongate · T Measure Tape")
 
     def check_context(self):
         if not self.tool:
@@ -254,7 +258,7 @@ class Controller(QtCore.QObject):
         try:
             if App.ActiveDocument != self.doc or Gui.activeDocument().activeView() != self.view:
                 self.cancel()
-            elif self.tool in ("Rectangle", "Circle", "Offset", "Elongate", "Arc", "Arc2Point", "Sphere", "Polygon", "Line", "VertexMove", "PushPull", "Round", "Slice", "MeshSplit", "MeshStretch", "MeshRegion", "Rotate", "Subdivide", "Scale", "Loft", "Sweep", "Deform") and self.doc.UndoCount != self.line_undo_count:
+            elif self.tool in ("Rectangle", "Circle", "Offset", "Elongate", "Arc", "Arc2Point", "Sphere", "Polygon", "Line", "Tape", "VertexMove", "PushPull", "Round", "Slice", "MeshSplit", "MeshStretch", "MeshRegion", "Rotate", "Subdivide", "Scale", "Loft", "Sweep", "Deform") and self.doc.UndoCount != self.line_undo_count:
                 # Menu/toolbar Undo invalidates cached anchors, faces and
                 # opposite-face contact, just as the keyboard shortcut does.
                 self.cancel()
@@ -546,7 +550,15 @@ class Controller(QtCore.QObject):
                 selection = [(item.Object, tuple(item.SubElementNames))
                              for item in Gui.Selection.getSelectionEx()
                              if item.Object.Document == App.ActiveDocument]
+                removed = guides.remove([obj for obj, _ in selection])
+                selection = [(obj, subs) for obj, subs in selection
+                             if not (guides.is_guide(obj) or guides.is_group(obj))]
+                if removed and not selection:
+                    Gui.Selection.clearSelection()
+                    self.message("Guides deleted · Undo with ⌘Z")
+                    return
                 changed, seams = ops.delete_selection(selection)
+                changed = changed or removed
                 Gui.Selection.clearSelection()
                 if seams:
                     msg = ("Selection deleted; surface seams kept · Undo with ⌘Z" if changed else
@@ -634,6 +646,9 @@ class Controller(QtCore.QObject):
             if tool == "PushPull":
                 Gui.Selection.clearSelection()
             self.preview = Preview(self.view)
+            if tool == "Tape":
+                from .tools.tape import TapeInput
+                self.tape_input = TapeInput(self)
             if tool == "Offset":
                 if self.doc:
                     try:
@@ -675,6 +690,7 @@ class Controller(QtCore.QObject):
                           "Sphere": "Click sphere center · then set radius · Tab for exact radius",
                           "Polygon": "Choose Sides below · Click center, then a vertex for size and orientation · Tab for radius",
                           "Line": "Click first endpoint · Keep clicking to continue · Esc finishes",
+                          "Tape": "Click an edge or guide to measure out from it, or a point to measure from · Esc ends",
                           "PushPull": "Click a flat face or use the dialog to push/pull · Esc cancels",
                           "Move": "Click a base point on the selected objects, or click an object",
                           "Copy": "Click a base point on the selected objects, or click an object"}[tool]
@@ -925,7 +941,7 @@ class Controller(QtCore.QObject):
                 return
             self.commit()
             return
-        if self.tool in ("Rectangle", "Circle", "Sphere", "Polygon", "Line", "Arc", "Arc2Point"):
+        if self.tool in ("Rectangle", "Circle", "Sphere", "Polygon", "Line", "Arc", "Arc2Point", "Tape"):
             start = self.drawing_start(pos)
             if start is None:
                 self.miss_surface()
@@ -937,9 +953,12 @@ class Controller(QtCore.QObject):
                 self.plane = self.surface_frame.plane
                 self.surface_point = geo.V()
             self.anchor = snap.point
-            if self.tool == "Line" and self.plane_lock is None and self.controls.plane.currentText() == "Auto":
+            if self.tool == "Tape" or (self.tool == "Line" and self.plane_lock is None
+                                       and self.controls.plane.currentText() == "Auto"):
                 self.auto_line = True
                 self.line_faces = self.snapper.faces_at(self.anchor)
+            if self.tape_input is not None:
+                self.tape_input.begin(snap)
         elif self.tool == "VertexMove":
             hit = pick(self.view, self.doc, pos, prefer_boundary=True)
             if not hit or not hit[3].startswith('Vertex'):
@@ -988,12 +1007,12 @@ class Controller(QtCore.QObject):
         elif self.tool == 'Rectangle':
             self.message('Click opposite corner · Tab for width, height' +
                          (' in the local surface frame · Esc cancels' if self.surface_frame else ' · Esc cancels'))
-        elif self.tool not in ("Line", "Circle", "Sphere", "Polygon"):
+        elif self.tool not in ("Line", "Circle", "Sphere", "Polygon", "Tape"):
             self.message("Choose destination · Tab for size · Esc cancels" +
                          (" · X/Y/Z locks an axis" if self.tool in ("Move", "Copy", "VertexMove") else ""))
 
     def center_hint(self, pos, snap, plane):
-        if (self.tool not in ("Line", "Circle", "Sphere", "Polygon", "Arc", "Arc2Point", "Move", "Copy")
+        if (self.tool not in ("Line", "Circle", "Sphere", "Polygon", "Arc", "Arc2Point", "Move", "Copy", "Tape")
                 or not self.controls.snap.isChecked()):
             return None
         if snap.label in ("Face center", "Circle center"):
@@ -1026,7 +1045,7 @@ class Controller(QtCore.QObject):
 
     def endpoint_hint(self, pos, snap, plane):
         """The vertex captured, or the nearest one just beyond capture."""
-        if (self.tool not in ("Line", "Circle", "Sphere", "Polygon", "Arc", "Arc2Point", "Rectangle", "Move", "Copy")
+        if (self.tool not in ("Line", "Circle", "Sphere", "Polygon", "Arc", "Arc2Point", "Rectangle", "Move", "Copy", "Tape")
                 or not self.controls.snap.isChecked()):
             return None
         if snap is not None and snap.label == "Endpoint":
@@ -1049,7 +1068,8 @@ class Controller(QtCore.QObject):
         self.preview.show_endpoint(endpoint, self.hint_captured(snap, endpoint))
 
     def midpoint_hint(self, pos, snap, plane):
-        if self.tool not in ("Line", "Circle", "Sphere", "Polygon", "Arc", "Arc2Point") or not self.controls.snap.isChecked():
+        if (self.tool not in ("Line", "Circle", "Sphere", "Polygon", "Arc", "Arc2Point", "Tape")
+                or not self.controls.snap.isChecked()):
             return None
         if snap.label == "Midpoint":
             return snap.point
@@ -1081,7 +1101,7 @@ class Controller(QtCore.QObject):
     def hover(self, pos):
         self.last_pos = pos
         if self.anchor is None:
-            if self.tool in ("Rectangle", "Circle", "Sphere", "Polygon", "Line", "Arc", "Arc2Point"):
+            if self.tool in ("Rectangle", "Circle", "Sphere", "Polygon", "Line", "Arc", "Arc2Point", "Tape"):
                 start = self.drawing_start(pos)
                 if start is None:
                     return self.miss_surface()
@@ -1134,7 +1154,7 @@ class Controller(QtCore.QObject):
             if chosen is None:
                 return self.miss_surface()
             snap, self.drawing_surface = chosen
-        elif self.tool == 'Line':
+        elif self.tool in ('Line', 'Tape'):
             snap, self.plane = self.snapper.snap_line(pos, self.plane, self.anchor,
                                                         self.line_faces, self.controls.snap.isChecked(),
                                                         axis=self.axis, fixed=not self.auto_line)
@@ -1199,6 +1219,8 @@ class Controller(QtCore.QObject):
         delta = self.point - self.anchor
         if self.arc_input:
             self.arc_input.preview(snap, center, midpoint)
+        elif self.tape_input is not None:
+            self.tape_input.preview(snap)
         elif self.surface_frame is not None and self.tool != 'Line':
             frame, plane = self.surface_frame, geo.Plane.named('XY')
             point = self.surface_point
@@ -1275,7 +1297,7 @@ class Controller(QtCore.QObject):
         move shows the shape's own sizes again, while the field keeps the
         typed text for Enter.
         """
-        if (self.tool not in ("Line", "Rectangle", "Circle", "Sphere", "Polygon")
+        if (self.tool not in ("Line", "Rectangle", "Circle", "Sphere", "Polygon", "Tape")
                 or self.anchor is None or self.preview is None):
             return
 
@@ -1287,7 +1309,7 @@ class Controller(QtCore.QObject):
                 value = "%.2f mm" % geo.parse_length(value)
             except Exception:
                 pass  # Unfinished, such as "2 c": shown as typed.
-            return value if self.tool in ("Line", "Rectangle") else "R " + value
+            return value if self.tool in ("Line", "Rectangle", "Tape") else "R " + value
         values = text.split(",")[:2] if self.tool == "Rectangle" else [text]
         self.preview.relabel([label(value) for value in values])
 
@@ -1300,6 +1322,10 @@ class Controller(QtCore.QObject):
             return
         try:
             text = self.controls.value.text()
+            if self.tape_input is not None:
+                self.tape_input.numeric(text)
+                self.commit()
+                return
             if self.offset_input is not None:
                 self.offset_input.numeric(text)
                 self.commit()
@@ -1378,6 +1404,9 @@ class Controller(QtCore.QObject):
         if self.drawing_surface is not None and self.point is None:
             return
         face_changed = False
+        if self.tape_input is not None:
+            self.tape_input.commit()
+            return
         if self.offset_input is not None:
             results = self.offset_input.commit()
             face_changed = self.offset_input.profile.face
@@ -1538,8 +1567,8 @@ class Controller(QtCore.QObject):
         if self.tool == 'Line' and self.anchor is not None and self.drawing_surface is not None:
             self.message('Surface lines follow the face · Switch to Draw: Plane for straight lines and X/Y/Z locks')
             return
-        if self.tool == "Line" and self.anchor is None:
-            self.message("Click the first endpoint before locking an axis.")
+        if self.tool in ("Line", "Tape") and self.anchor is None:
+            self.message("Click the first " + ("endpoint" if self.tool == "Line" else "point") + " before locking an axis.")
             return
         direction = {"X": geo.V(1, 0, 0), "Y": geo.V(0, 1, 0), "Z": geo.V(0, 0, 1)}.get(char)
         if (direction is not None and self.tool == "Line" and self.anchor is not None and not self.auto_line
@@ -1548,7 +1577,7 @@ class Controller(QtCore.QObject):
             return
         self.axis = None if direction is None or self.axis == direction else direction
         self.message((char + " axis " if char else "Axis ") + ("locked" if self.axis else "unlocked"))
-        if self.tool in ("Line", "VertexMove") and self.anchor is not None and self.last_pos is not None:
+        if self.tool in ("Line", "Tape", "VertexMove") and self.anchor is not None and self.last_pos is not None:
             try:
                 self.motion(self.last_pos)
             except ValueError as error:
@@ -1661,9 +1690,11 @@ class Controller(QtCore.QObject):
                 self.cancel()
             return False
         key, char = event.key(), event.text().upper()
-        shortcuts = {"N": "Deform", "K": "Scale", "Q": "Loft", "W": "Sweep", "V": "VertexMove", "E": "Offset", "X": "Elongate", "A": "Arc", "H": "Arc2Point", "S": "Select", "R": "Rectangle", "O": "Circle", "B": "Sphere", "G": "Polygon", "L": "Line", "P": "PushPull", "F": "Round", "D": "Subdivide", "Y": "Analytic", "U": "Slice", "J": "Union", "I": "Intersect", "M": "Move", "T": "Rotate", "C": "Copy", "Z": "Measure"}
+        shortcuts = {"N": "Deform", "K": "Scale", "W": "Sweep", "V": "VertexMove", "E": "Offset", "X": "Elongate", "A": "Arc", "H": "Arc2Point", "S": "Select", "R": "Rectangle", "O": "Circle", "B": "Sphere", "G": "Polygon", "L": "Line", "P": "PushPull", "F": "Round", "D": "Subdivide", "Y": "Analytic", "U": "Slice", "J": "Union", "I": "Intersect", "M": "Move", "Q": "Rotate", "T": "Tape", "C": "Copy", "Z": "Measure"}
         numeric = bool(self.tool and self.anchor is not None and (key == QtCore.Qt.Key_Tab or event.text() in "0123456789.-" and event.text()))
-        axis = self.tool in ("Line", "Move", "Copy", "VertexMove") and char in ("X", "Y", "Z")
+        if char == "Q" and event.modifiers() & QtCore.Qt.ShiftModifier:
+            shortcuts["Q"] = "Loft"
+        axis = self.tool in ("Line", "Tape", "Move", "Copy", "VertexMove") and char in ("X", "Y", "Z")
         # Arrows belong to FreeCAD's navigation unless a drawing tool has the view.
         arrow = ARROW_KEYS.get(int(key)) if self.tool in DRAW_TOOLS and mdi.isAncestorOf(focus) else None
         handled = (key == QtCore.Qt.Key_Escape or char in shortcuts or key in (QtCore.Qt.Key_Delete, QtCore.Qt.Key_Backspace)

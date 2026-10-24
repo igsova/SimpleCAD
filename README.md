@@ -31,7 +31,8 @@ edited as they are.
   cylinders and smooth surfaces.
 - **Snapping and measuring.** Snap to endpoints, midpoints, face and hole
   centers and the X/Y/Z axes. Measure hole diameters, spacing, distances and
-  angles, and leave dimensions in the view.
+  angles, and leave dimensions in the view. Measure Tape leaves dashed guides
+  to draw against, as in SketchUp.
 - **Plain FreeCAD files.** Results are ordinary Part and Mesh objects in
   `.FCStd` documents that open without SimpleCAD installed. Every edit is one
   Undo step.
@@ -115,7 +116,7 @@ The [user guide](docs/user-guide.md) covers every tool.
 | **Draw** | Select, Line, Rectangle, Circle, Arc, 2 Point Arc, Polygon, Sphere |
 | **Modify** | Push/Pull, Offset, Elongate, Fit Circle / Cylinder, Round edges, Subdivide face, Slice / Separate (with printable stud joints), Intersect Faces, Union, Move Vertex, Move, Rotate, Bend / Soft Deform, Scale / Stretch, Loft, Sweep, Copy, Pattern, Mirror, Delete, Color & opacity, Merge coincident geometry, Heal to precision |
 | **Surface** | Draw on surface, Offset face, Shell / Thicken, Draft faces, Delete & heal faces, Remove rounds, Fill hole, Unwrap face |
-| **Inspect** | Smart select, Measure, Curvature map, Isolate selection |
+| **Inspect** | Smart select, Measure, Measure Tape, Curvature map, Isolate selection |
 | **Mesh** | Make mesh editable, Split mesh, Stretch mesh, Mesh region (Move / Rotate / Extrude) |
 
 Single-letter shortcuts work while the 3D view has focus; see the

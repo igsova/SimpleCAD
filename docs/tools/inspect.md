@@ -87,7 +87,43 @@ Measure reads sizes from the model without changing it: a hole's diameter, an ed
 - Two picks: two holes give their center spacing and the wall between them; two flat faces their distance when parallel and the angle between them; two points their distance and ΔX ΔY ΔZ. Every pair also shows the minimum distance.
 - A third click starts a new measurement. Placed dimensions stay in view while you edit and keep their arrow size as you zoom; they do not change the model.
 
-**See also:** [Smart select](#smartselect) · [Curvature map](#curvature)
+**See also:** [Measure Tape](#tape) · [Smart select](#smartselect) · [Curvature map](#curvature)
+
+## Measure Tape { #tape }
+
+Measure Tape measures out from an edge or a point and leaves a dashed guide there, as SketchUp's Tape Measure does. Lines and shapes then snap to the guide, so you can start or end them at an exact distance from an edge.
+
+![](../../Resources/icons/tape.svg){ .tool-icon } Inspect toolbar · Shortcut <kbd>T</kbd>
+{ .tool-facts }
+
+![Two dashed guides placed 15 mm and 25 mm in from the edges of a plate, and a third being measured 20 mm in from its right edge](../images/measure-tape.png)
+
+**Steps**
+
+1. Click Measure Tape or press T. Nothing needs to be selected.
+2. Click an edge, away from its ends and middle, or a guide line. Move the pointer to the side the guide should go: the tape measures straight out from the edge, and a dashed line parallel to it follows the pointer.
+3. Click to place the guide, or type the distance and press Enter.
+4. Measure again from another edge, or press Esc to finish.
+
+To leave a guide point instead of a line, start on a corner, a midpoint, a face or a guide point. The tape then measures from that point to the pointer, and the guide point goes where you click or at the distance you type, toward the pointer.
+
+**Keys**
+
+| Key | What it does |
+| --- | --- |
+| <kbd>T</kbd> | Start Measure Tape. |
+| <kbd>Tab</kbd> or a digit | Type the distance in a box on the tape. |
+| <kbd>X</kbd> / <kbd>Y</kbd> / <kbd>Z</kbd> | Measure from a point along a world axis. |
+| <kbd>Esc</kbd> | End Measure Tape. The guides stay. |
+
+**Notes**
+
+- Drawing tools snap to guides: along a guide line (**On guide**), to a guide point (**Guide point**), and where a guide crosses an edge or another guide (**Intersection**).
+- Guides are construction, not geometry. They never change the model, and modeling tools, selection windows and exports pass them by. Fit All frames the model, not the guide lines.
+- Each guide is one Undo step. The guides are kept in a **Guides** group on the Objects tab: hide the group to hide them all, or select it and press Delete to remove them all. Click a single guide and press Delete to remove just that one.
+- Guides are saved with the model. FreeCAD without SimpleCAD opens the file but cannot show them.
+
+**See also:** [Measure](#measure) · [Snapping](draw.md#snapping) · [Line](draw.md#line)
 
 ## Curvature map { #curvature }
 

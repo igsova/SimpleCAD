@@ -465,7 +465,7 @@ Move slides whole objects from a base point to a destination. Both points snap t
 
 Rotate turns whole objects around a world axis or one of the object's own axes. A panel previews the angle before anything changes.
 
-![](../../Resources/icons/rotate.svg){ .tool-icon } Modify toolbar · Shortcut <kbd>T</kbd> · MCP `simplecad_rotate`
+![](../../Resources/icons/rotate.svg){ .tool-icon } Modify toolbar · Shortcut <kbd>Q</kbd> · MCP `simplecad_rotate`
 { .tool-facts }
 
 <figure class="tool-clip">
@@ -476,7 +476,7 @@ Rotate turns whole objects around a world axis or one of the object's own axes. 
 **Steps**
 
 1. Select one or more objects.
-2. Click Rotate or press T with the 3D view focused. A colored arrow and ring show the axis.
+2. Click Rotate or press Q with the 3D view focused. A colored arrow and ring show the axis.
 3. Choose the axis and the center to rotate around.
 4. Drag the angle slider, click a preset, or type an exact angle such as 37.5 or -90.
 5. Click Apply or press Enter to keep the rotation.
@@ -608,7 +608,7 @@ Scale / Stretch resizes whole objects by factors. Keep X, Y and Z linked for a u
 
 Loft connects two or more profiles, in order, into a new solid or surface. Use it for shapes that change cross-section along their length, such as a vase or a duct transition.
 
-![](../../Resources/icons/loft.svg){ .tool-icon } Modify toolbar · Shortcut <kbd>Q</kbd> · MCP `simplecad_loft`
+![](../../Resources/icons/loft.svg){ .tool-icon } Modify toolbar · Shortcut <kbd>Shift</kbd>+<kbd>Q</kbd> · MCP `simplecad_loft`
 { .tool-facts }
 
 <figure class="tool-clip">
@@ -619,7 +619,7 @@ Loft connects two or more profiles, in order, into a new solid or surface. Use i
 **Steps**
 
 1. Select two or more profiles in the order to connect them: circle, rectangle or polygon faces, flat faces, or connected outlines. Hold Ctrl or Cmd to add to the selection.
-2. Click Loft or press Q. The panel lists the profiles and the preview appears.
+2. Click Loft or press Shift+Q. The panel lists the profiles and the preview appears.
 3. Use Move up and Move down to fix the order if needed.
 4. Choose smooth or straight (ruled) transitions, and a solid or a surface.
 5. Click Apply.

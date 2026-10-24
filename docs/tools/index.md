@@ -31,10 +31,10 @@ Every SimpleCAD tool, grouped as on the toolbar. Each tool has a short clip; som
 | ![](../../Resources/icons/union.svg){ .tool-icon } | [Union](modify.md#union) | <kbd>J</kbd> | Union joins overlapping whole objects into one closed solid. |
 | ![](../../Resources/icons/vertexmove.svg){ .tool-icon } | [Move Vertex](modify.md#vertexmove) | <kbd>V</kbd> | Move Vertex drags one corner of a part and reshapes the flat faces around it. |
 | ![](../../Resources/icons/move.svg){ .tool-icon } | [Move](modify.md#move) | <kbd>M</kbd> | Move slides whole objects from a base point to a destination. |
-| ![](../../Resources/icons/rotate.svg){ .tool-icon } | [Rotate](modify.md#rotate) | <kbd>T</kbd> | Rotate turns whole objects around a world axis or one of the object's own axes. |
+| ![](../../Resources/icons/rotate.svg){ .tool-icon } | [Rotate](modify.md#rotate) | <kbd>Q</kbd> | Rotate turns whole objects around a world axis or one of the object's own axes. |
 | ![](../../Resources/icons/deform.svg){ .tool-icon } | [Bend / Soft Deform](modify.md#deform) | <kbd>N</kbd> | Bend / Soft Deform reshapes one object freely. |
 | ![](../../Resources/icons/scale.svg){ .tool-icon } | [Scale / Stretch](modify.md#scale) | <kbd>K</kbd> | Scale / Stretch resizes whole objects by factors. |
-| ![](../../Resources/icons/loft.svg){ .tool-icon } | [Loft](modify.md#loft) | <kbd>Q</kbd> | Loft connects two or more profiles, in order, into a new solid or surface. |
+| ![](../../Resources/icons/loft.svg){ .tool-icon } | [Loft](modify.md#loft) | <kbd>Shift</kbd>+<kbd>Q</kbd> | Loft connects two or more profiles, in order, into a new solid or surface. |
 | ![](../../Resources/icons/sweep.svg){ .tool-icon } | [Sweep](modify.md#sweep) | <kbd>W</kbd> | Sweep carries a profile along a path to make a new solid or surface, such as a pipe, a rail or a handle. |
 | ![](../../Resources/icons/copy.svg){ .tool-icon } | [Copy](modify.md#copy) | <kbd>C</kbd> | Copy places an independent copy of the selected objects, using the same base point and destination interaction as Move. |
 |  | [Copy, cut and paste](modify.md#clipboard) | <kbd>⌘C</kbd> / <kbd>⌘X</kbd> / <kbd>⌘V</kbd> | ⌘C, ⌘X and ⌘V (Ctrl+C, Ctrl+X and Ctrl+V on Windows and Linux) copy, cut and paste whole objects. |
@@ -62,6 +62,7 @@ Every SimpleCAD tool, grouped as on the toolbar. Each tool has a short clip; som
 | --- | --- | --- | --- |
 |  | [Smart select](inspect.md#smartselect) |  | Smart select grows one face or edge into what you most likely meant: a whole hole, an edge loop, a flat region or a smooth curved surface. |
 | ![](../../Resources/icons/measure.svg){ .tool-icon } | [Measure](inspect.md#measure) | <kbd>Z</kbd> | Measure reads sizes from the model without changing it: a hole's diameter, an edge's length, a face's area, the radius of a curve, and distances and angles between two picks. |
+| ![](../../Resources/icons/tape.svg){ .tool-icon } | [Measure Tape](inspect.md#tape) | <kbd>T</kbd> | Measure Tape measures out from an edge or a point and leaves a dashed guide there, as SketchUp's Tape Measure does. |
 | ![](../../Resources/icons/curvature.svg){ .tool-icon } | [Curvature map](inspect.md#curvature) |  | Curvature map colours curved faces by how tightly they bend, from red for tight bends through yellow and green to blue for gentle ones. |
 | ![](../../Resources/icons/isolate.svg){ .tool-icon } | [Isolate selection](inspect.md#isolate) |  | Isolate selection hides every object except the selected ones, so you can work on one part of a crowded model. |
 
