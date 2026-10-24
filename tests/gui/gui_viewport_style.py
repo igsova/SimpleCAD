@@ -384,6 +384,21 @@ def run():
         assert tuple(mesh.ViewObject.ShapeColor)[:3] == mesh_colour
         assert [(tuple(o.ViewObject.LineColor), o.ViewObject.LineWidth) for o in (box, line, red)] == properties
         App.Console.PrintMessage("PASS: later documents and extra views styled, closed views dropped; only the colour test's own Undo step, no saved colour changed\n")
+
+        # A loose line lying on a shown face draws black like the face's own edges.
+        on_top = ops.new_shape(doc, Part.makeLine(V(-4, -4, 10), V(4, 4, 10)), "Line on top")
+        saved = tuple(on_top.ViewObject.LineColor)
+
+        def drawn(obj):
+            return tuple(vs.materials(obj.ViewObject.RootNode)["LineMaterial"][0].diffuseColor[0].getValue())
+        flush(); style.refresh()
+        near(drawn(on_top), vs.EDGE); near(drawn(line), vs.LOOSE)
+        box.ViewObject.Visibility = False; flush(); style.refresh()
+        near(drawn(on_top), vs.LOOSE)
+        box.ViewObject.Visibility = True; flush(); style.refresh()
+        near(drawn(on_top), vs.EDGE)
+        assert tuple(on_top.ViewObject.LineColor) == saved
+        App.Console.PrintMessage("PASS: a loose line on a face draws black; on a hidden face or in empty space it stays light; its saved colour is unchanged\n")
     finally:
         c.cancel(quiet=True)
         prefs.save(previous)

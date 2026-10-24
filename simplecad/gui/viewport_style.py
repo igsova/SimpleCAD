@@ -10,10 +10,10 @@ turned left a little darker and turned right darker still, from any side. A
 specular override removes shiny highlights without touching any colour.
 Faces and edges keep their colour unless it is a default one: such faces are
 drawn in the chosen face colour (a light blue-grey unless set otherwise),
-edges black on faces and light on loose lines. FreeCAD highlights a hovered
-or selected face by adding a colour, which a light face cannot show, so the
-style draws such faces again in a tint of that colour; a raw mesh, highlighted
-whole, takes a tint as its face colour. FreeCAD resets its background
+edges black on faces, as are loose lines lying on a face, and light on other
+loose lines. FreeCAD highlights a hovered or selected face by adding a colour,
+which a light face cannot show, so the style draws such faces again in a tint
+of that colour; a raw mesh, highlighted whole, takes a tint as its face colour. FreeCAD resets its background
 whenever a View preference changes; the style puts its own back before the
 next frame. Stopping restores FreeCAD's background (from its preferences),
 lights, ambient light and face and edge colours, and removes the tints.
@@ -22,6 +22,7 @@ import math
 
 import FreeCAD as App
 import FreeCADGui as Gui
+import Part
 from pivy import coin
 
 from . import surface_display
@@ -43,6 +44,7 @@ AMBIENT = (0.2, (1., 1., 1.))
 FACE = (227/255, 227/255, 236/255)  # #E3E3EC, a light grey with a touch of blue
 EDGE = (0., 0., 0.)
 LOOSE = (0.8, 0.82, 0.85)
+ON_FACE = 1e-3  # how near a face a loose line counts as drawn on it, in mm
 # SimpleCAD's own face and edge colours for new shapes; FreeCAD's come from
 # preferences, and converted meshes keep the mesh's colour.
 SIMPLECAD_FACE = (0.76, 0.84, 0.88)
@@ -159,6 +161,26 @@ def edge_colour(colour, defaults, faces, mode):
     if not any(close(colour, default) for default in defaults):
         return None
     return EDGE if faces and mode not in ("Wireframe", "Points") else LOOSE
+
+
+def on_faces(edges, faces):
+    """Whether every edge lies on one of the faces, judged at its middle.
+
+    A loose line drawn on a face, such as one left after merging two faces,
+    draws black like the face's own edges, as in SketchUp; light grey would
+    vanish on a light face.
+    """
+    if not edges or not faces:
+        return False
+    faces = Part.makeCompound(faces)
+    return all(Part.Vertex(edge.valueAt((edge.FirstParameter + edge.LastParameter) / 2)).distToShape(faces)[0]
+               <= ON_FACE for edge in edges)
+
+
+def is_part(obj):
+    view = getattr(obj, "ViewObject", None)
+    return (view is not None and obj.isDerivedFrom("Part::Feature")
+            and hasattr(view, "LineColor") and hasattr(view, "PointColor"))
 
 
 def colour_of(field):
@@ -778,6 +800,7 @@ class ViewportStyle(QtCore.QObject):
         self.views = []
         self.styled = {}
         self.faces = {}
+        self.lying = {}
         self.mdi = self.params = None
         self.pending = QtCore.QTimer(self)
         self.pending.setSingleShot(True)
@@ -889,6 +912,7 @@ class ViewportStyle(QtCore.QObject):
             for highlight in highlights or ():
                 highlight.close()
         self.faces = {key: known for key, known in self.faces.items() if key[0] != doc.Name}
+        self.lying = {key: known for key, known in self.lying.items() if key[0] != doc.Name}
 
     def drop(self, record, restore=False):
         if record.widget is not None and alive(record.view):
@@ -966,6 +990,11 @@ class ViewportStyle(QtCore.QObject):
         targets, palette = current_targets(), {}
         present = set()
         for doc in App.listDocuments().values():
+            parts = {obj.Name: self.known(doc, obj) for obj in doc.Objects if is_part(obj)}
+            # Shown faces of parts, which loose lines on them draw over.
+            shown = [(obj, known) for obj, known in ((doc.getObject(name), known) for name, known in parts.items())
+                     if known[1] and obj.ViewObject.Visibility
+                     and obj.ViewObject.DisplayMode not in ("Wireframe", "Points")]
             for obj in doc.Objects:
                 view = getattr(obj, "ViewObject", None)
                 if view is None:
@@ -974,19 +1003,14 @@ class ViewportStyle(QtCore.QObject):
                 if mesh:
                     # A raw mesh: only its faces, and only in a single colour.
                     faces, line, point, colours = True, None, None, (None, None)
-                elif obj.isDerivedFrom("Part::Feature") and hasattr(view, "LineColor") and hasattr(view, "PointColor"):
-                    shape = obj.Shape
-                    # Counting a dense part's faces takes milliseconds; its hash does not.
-                    stamp = None if shape.isNull() else shape.hashCode()
-                    key = (doc.Name, obj.Name)
-                    known = self.faces.get(key)
-                    if known is None or known[0] != stamp:
-                        known = self.faces[key] = (stamp, stamp is not None and shape.countElement("Face") > 0)
+                elif obj.Name in parts:
+                    known = parts[obj.Name]
                     faces = known[1]
+                    lying = not faces and self.lies_on(doc, obj, known, shown)
                     mode = view.DisplayMode
                     line, point = tuple(view.LineColor[:3]), tuple(view.PointColor[:3])
-                    colours = (edge_colour(line, line_defaults, faces, mode),
-                               None if faces else edge_colour(point, point_defaults, faces, mode))
+                    colours = (edge_colour(line, line_defaults, faces or lying, mode),
+                               None if faces else edge_colour(point, point_defaults, lying, mode))
                 else:
                     continue
                 if colours == (None, None) and not faces:
@@ -1015,6 +1039,36 @@ class ViewportStyle(QtCore.QObject):
         for key in set(self.styled) - present:
             self.release_object(key)
         self.highlight(targets, palette)
+
+    def known(self, doc, obj):
+        """(hash, whether it has faces, bounds grown by ON_FACE) of a part's
+        shape, found again only when the shape changes."""
+        shape = obj.Shape
+        # Counting a dense part's faces takes milliseconds; its hash does not.
+        stamp = None if shape.isNull() else shape.hashCode()
+        key = (doc.Name, obj.Name)
+        known = self.faces.get(key)
+        if known is None or known[0] != stamp:
+            bounds = None if stamp is None else shape.BoundBox
+            if bounds is not None and bounds.isValid():
+                bounds.enlarge(ON_FACE)
+            known = self.faces[key] = (stamp, stamp is not None and shape.countElement("Face") > 0, bounds)
+        return known
+
+    def lies_on(self, doc, obj, known, shown):
+        """Whether a loose line object lies on the shown faces of other parts,
+        checked again only when it or a part near it changes."""
+        stamp, _, bounds = known
+        if stamp is None or not bounds.isValid():
+            return False
+        near = [(other, other_stamp) for other, (other_stamp, _, other_bounds) in shown
+                if other != obj and other_bounds.isValid() and other_bounds.intersect(bounds)]
+        key, signature = (doc.Name, obj.Name), (stamp, tuple((other.Name, other_stamp) for other, other_stamp in near))
+        cached = self.lying.get(key)
+        if cached is None or cached[0] != signature:
+            cached = self.lying[key] = (signature, bool(near) and on_faces(
+                obj.Shape.Edges, [face for other, _ in near for face in other.Shape.Faces]))
+        return cached[1]
 
     def highlight_colours(self, obj, palette):
         """FreeCAD's (selection, hover) colours in `obj`'s document, cached in `palette`."""
@@ -1094,3 +1148,4 @@ class ViewportStyle(QtCore.QObject):
         for key in list(self.styled):
             self.release_object(key)
         self.faces = {}
+        self.lying = {}

@@ -12,6 +12,9 @@ commands, and reconnect an MCP client to refresh its tool list.
   height are separate solids, and such a Delete erased the line from each
   alone: both lost their top and the wall under the line, leaving open
   shells.
+- Loose lines lying on a face draw black in the dark viewport, like the
+  face's own edges and as in SketchUp. They were drawn light grey, which
+  nearly vanished on light faces. Lines in empty space stay light grey.
 
 ### Changed
 
