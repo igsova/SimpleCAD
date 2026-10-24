@@ -26,7 +26,7 @@ class MeshDialog(QtWidgets.QDialog):
         self.tolerance.setToolTip('Maximum deviation from a fitted surface, and the limit for boundary repair. This is a distance in mm, not a target face count.')
         form.addRow('Surface / repair tolerance', self.tolerance)
         self.surfaces = QtWidgets.QCheckBox('Fit smooth surfaces (fewest faces)')
-        self.surfaces.setChecked(App.ParamGet(preferences.PARAMETER_PATH).GetBool('smooth_surfaces', True))
+        self.surfaces.setChecked(preferences.smooth_surfaces())
         self.surfaces.setToolTip('Rebuild flat and curved regions as fitted planes, cylinders and smooth B-spline faces within the tolerance. '
                                  'Round holes and bosses become analytic cylinders. If a part cannot be fitted, '
                                  'it falls back to flat faces and triangles, with a warning.')

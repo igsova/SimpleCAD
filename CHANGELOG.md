@@ -35,6 +35,13 @@ commands, and reconnect an MCP client to refresh its tool list.
   in one kernel call could take the pocket's walls and floor too. A removal
   that would take a face that is not a round is now refused for that round.
 
+### Changed
+
+- The MCP `convert_mesh` tool fits smooth surfaces unless `surfaces` is
+  given, following the **Fit smooth surfaces** choice last made in **Make
+  mesh editable**, which starts on. It used to leave curved regions faceted by
+  default while the command in FreeCAD fitted them. (#7)
+
 ## 0.39.0
 
 ### Added
