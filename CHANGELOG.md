@@ -12,6 +12,10 @@ commands, and reconnect an MCP client to refresh its tool list.
   hole were taken for a single through hole, which removed the material
   between them without a warning. Each section now becomes its own analytic
   hole. (#4)
+- **Union** joins solids that touch tangentially, such as a block whose sides
+  are tangent to a round boss. Its check for unexpected material cut the
+  pieces out one at a time, which left a false remainder there, and refused
+  with "Union would add unexpected material". (#8)
 
 ## 0.39.0
 

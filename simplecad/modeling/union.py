@@ -145,11 +145,9 @@ def combine(shapes):
                 raise ValueError('Union would lose part of an object. The original pieces were kept.')
         # Check the final occupied volume directly. The unrefined intermediate
         # can contain redundant curved faces and report an incorrect volume.
-        remaining = solid
-        for source in inputs:
-            remaining = remaining.cut(source)
-            if remaining.isNull():
-                break
+        # Every input is cut in one Boolean: one at a time, a block whose
+        # sides are tangent to a boss leaves a false remainder.
+        remaining = solid.cut(inputs)
         if not remaining.isNull() and abs(remaining.Volume) > tolerance:
             raise ValueError('Union would add unexpected material. The original pieces were kept.')
     except (Part.OCCError, RuntimeError) as error:
