@@ -7,7 +7,7 @@ edited as they are.
 
 [![FreeCAD 1.1](https://img.shields.io/badge/FreeCAD-1.1-red)](https://www.freecad.org)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-![Version 0.38.3](https://img.shields.io/badge/version-0.38.3-lightgrey)
+![Version 0.39.0](https://img.shields.io/badge/version-0.39.0-lightgrey)
 [![Unit tests](https://github.com/igsova/SimpleCAD/actions/workflows/tests.yml/badge.svg)](https://github.com/igsova/SimpleCAD/actions/workflows/tests.yml)
 [![Lint](https://github.com/igsova/SimpleCAD/actions/workflows/lint.yml/badge.svg)](https://github.com/igsova/SimpleCAD/actions/workflows/lint.yml)
 
