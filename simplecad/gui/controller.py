@@ -1095,6 +1095,8 @@ class Controller(QtCore.QObject):
         if self.measure_session is not None:
             self.measure_session.hover(pos)
             return
+        if any(typed is not None for typed in (self.offset_input, self.elongate_input, self.push_pull_input)):
+            self.last_pos = pos  # a typed size opens its box beside the pointer
         if self.offset_input is not None:
             self.offset_input.motion(pos)
             return

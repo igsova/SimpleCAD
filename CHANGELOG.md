@@ -3,6 +3,13 @@
 Notable changes to SimpleCAD. Restart FreeCAD after updating to load new
 commands, and reconnect an MCP client to refresh its tool list.
 
+## Unreleased
+
+### Fixed
+
+- A size typed during **Push/Pull**, **Offset** or **Elongate** opens its box
+  beside the pointer. It opened in the top-left corner of the view.
+
 ## 0.39.3
 
 ### Fixed

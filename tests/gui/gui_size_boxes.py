@@ -178,6 +178,19 @@ def run(screenshot=None):
         assert not c.size_input.boxes
         App.Console.PrintMessage("PASS: tools without a size label open one box beside the pointer\n")
 
+        # Push/Pull follows the pointer through its own input; its box opens there too.
+        c.start("PushPull")
+        c.click(pos(V(30, 30, 100)))
+        c.motion(pos(V(40, 30, 100)))
+        keys("\t", start_in_view=True)
+        assert c.push_pull_input is not None and len(c.size_input.boxes) == 1
+        box = c.size_input.boxes[0]
+        x, y = widget_point(view, box.parentWidget(), pos(V(40, 30, 100)))
+        assert 0 < box.x() - x <= 20 and 0 < box.y() - y <= 20, (box.pos(), x, y)
+        c.cancel()
+        assert not c.size_input.boxes
+        App.Console.PrintMessage("PASS: Push/Pull opens its box beside the pointer\n")
+
         # An edge-on drawing plane is a status-bar hint on each move, not a Report view error.
         reported = []
         c.report = reported.append
