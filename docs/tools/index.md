@@ -1,6 +1,6 @@
 # Tools
 
-Every SimpleCAD tool, grouped as on the toolbar. Each tool has a short clip; some were recorded with an earlier version, so colors and labels can differ a little from what you see.
+Every SimpleCAD tool, grouped as on the toolbar. Each tool has a short clip, recorded with SimpleCAD 0.39.3.
 
 ## [Draw](draw.md)
 

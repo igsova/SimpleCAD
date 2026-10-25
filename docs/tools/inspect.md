@@ -96,7 +96,10 @@ Measure Tape measures out from an edge or a point and leaves a dashed guide ther
 ![](../../Resources/icons/tape.svg){ .tool-icon } Inspect toolbar · Shortcut <kbd>T</kbd>
 { .tool-facts }
 
-![Two dashed guides placed 15 mm and 25 mm in from the edges of a plate, and a third being measured 20 mm in from its right edge](../images/measure-tape.png)
+<figure class="tool-clip">
+<video src="clips/tape.mp4" poster="clips/tape.jpg" controls muted loop playsinline preload="none" aria-label="Two dashed guides are measured 15 mm and 20 mm in from the edges of a plate, then a line starts where they cross and runs along one of them."></video>
+<figcaption>Two dashed guides are measured 15 mm and 20 mm in from the edges of a plate, then a line starts where they cross and runs along one of them.</figcaption>
+</figure>
 
 **Steps**
 
