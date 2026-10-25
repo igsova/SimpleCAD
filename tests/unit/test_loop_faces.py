@@ -178,6 +178,27 @@ class LoopFaceTests(unittest.TestCase):
         self.assertAlmostEqual(areas[1], 2400, places=6)
         self.assertFalse(self.loose_lines())
 
+    def test_loose_lines_closing_through_a_solid_make_a_separate_face(self):
+        # The loop starts inside a round boss it will later be joined to (#9).
+        body = Part.makeBox(60, 70, 60, V(-60, -35, 0)).fuse(Part.makeCylinder(35, 60)).removeSplitter()
+        obj = ops.new_shape(self.doc, body, 'Body')
+        faces, volume = len(obj.Shape.Faces), obj.Shape.Volume
+        points = [(25, -19.18, 10), (120, -40, 10), (120, 40, 10), (25, 19.18, 10), (25, -19.18, 10)]
+        self.assertEqual(self.draw(*points), [False, False, False, True])
+        made = [o for o in self.doc.Objects if o != obj]
+        self.assertEqual(len(made), 1)
+        self.assertAlmostEqual(made[0].Shape.Area, (38.36 + 80) / 2 * 95, places=6)
+        self.assertEqual((len(obj.Shape.Faces), obj.Shape.Volume), (faces, volume))
+
+    def test_a_loop_through_a_solid_along_its_own_edges_makes_no_face_inside_it(self):
+        obj = ops.new_shape(self.doc, Part.makeBox(20, 20, 20), 'Box')
+        self.assertEqual(self.draw((0, 0, 20), (20, 20, 20)), [True])  # divides the top
+        # The space diagonal closes a triangle with a vertical edge and that
+        # top diagonal, all of it inside the box: it stays a line.
+        self.assertEqual(self.draw((0, 0, 0), (20, 20, 20)), [False])
+        self.assertEqual(len(obj.Shape.Faces), 7)
+        self.assertEqual(len(self.loose_lines()), 1)
+
     def draw_profile(self, profile):
         steps = self.doc.UndoCount
         result = ops.draw_profile(self.doc, profile, None, 'Profile')

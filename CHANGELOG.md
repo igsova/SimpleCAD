@@ -3,6 +3,15 @@
 Notable changes to SimpleCAD. Restart FreeCAD after updating to load new
 commands, and reconnect an MCP client to refresh its tool list.
 
+## Unreleased
+
+### Fixed
+
+- Loose lines that close a loop partly inside a solid now make a face, as a
+  separate object to pull and join with **Union**. They used to stay loose
+  lines with no message. A loop along the solid's own edges still makes no
+  face inside it. (#9)
+
 ## 0.39.2
 
 ### Fixed
