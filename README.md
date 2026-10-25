@@ -11,7 +11,7 @@ edited as they are.
 [![Unit tests](https://github.com/igsova/SimpleCAD/actions/workflows/tests.yml/badge.svg)](https://github.com/igsova/SimpleCAD/actions/workflows/tests.yml)
 [![Lint](https://github.com/igsova/SimpleCAD/actions/workflows/lint.yml/badge.svg)](https://github.com/igsova/SimpleCAD/actions/workflows/lint.yml)
 
-![SimpleCAD drawing a rectangle on a bracket, with its width and height shown beside the preview](docs/images/overview.png)
+![SimpleCAD drawing a rectangle on a bracket, with 40 and 30 typed in the width and height boxes beside the preview](docs/images/overview.png)
 
 ## Features
 
