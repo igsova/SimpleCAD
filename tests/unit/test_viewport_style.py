@@ -114,6 +114,19 @@ class ColourTests(unittest.TestCase):
         self.assertEqual(vs.edge_colour((0.15, 0.23, 0.29), defaults, False, "Flat Lines"), vs.LOOSE)
         self.assertIsNone(vs.edge_colour((1., 0., 0.), defaults, True, "Flat Lines"))
 
+    def test_loose_lines_lying_on_a_face_count_as_on_it(self):
+        import Part
+        V = App.Vector
+        top = [face for face in Part.makeBox(10, 10, 10).Faces if face.CenterOfMass.z > 9.9]
+        on, above = Part.makeLine(V(2, 2, 10), V(8, 2, 10)), Part.makeLine(V(2, 2, 11), V(8, 2, 11))
+        arc = Part.makeCircle(3, V(5, 5, 10))
+        self.assertTrue(vs.on_faces([on, arc], top))
+        self.assertFalse(vs.on_faces([above], top))
+        # Every edge has to lie on a face; a line off the box keeps the loose colour.
+        self.assertFalse(vs.on_faces([on, Part.makeLine(V(12, 2, 10), V(18, 2, 10))], top))
+        self.assertFalse(vs.on_faces([on], []))
+        self.assertFalse(vs.on_faces([], top))
+
     def test_only_default_face_colours_take_the_face_colour(self):
         defaults = vs.face_defaults(Params(), Params())
         self.assertEqual(defaults, (vs.SIMPLECAD_FACE, vs.unpack(vs.FREECAD_FACE), vs.unpack(vs.FREECAD_FACE)))
