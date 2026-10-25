@@ -3,7 +3,7 @@
 Notable changes to SimpleCAD. Restart FreeCAD after updating to load new
 commands, and reconnect an MCP client to refresh its tool list.
 
-## Unreleased
+## 0.39.2
 
 ### Fixed
 
@@ -13,7 +13,7 @@ commands, and reconnect an MCP client to refresh its tool list.
   alone: both lost their top and the wall under the line, leaving open
   shells.
 - Loose lines lying on a face draw black in the dark viewport, like the
-  face's own edges and as in SketchUp. They were drawn light grey, which
+  face's own edges. They were drawn light grey, which
   nearly vanished on light faces. Lines in empty space stay light grey.
 
 ### Changed
