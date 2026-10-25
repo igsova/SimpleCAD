@@ -151,7 +151,13 @@ def interior_point(face):
 
 
 def overlaps(shape, face):
-    """Whether a new face overlaps a shape: its common() has area.
+    """Whether a new face overlaps a shape: its common() has area."""
+    return overlap(shape, face) is not None
+
+
+def overlap(shape, face):
+    """How a new face overlaps a shape: 'surface' where it lies on one of the
+    shape's faces, 'interior' where it only passes through a solid, or None.
 
     That Boolean re-intersects every face of the shape, seconds per loop on a
     converted part. Only faces that come within a tolerance margin of the loop
@@ -178,14 +184,16 @@ def overlaps(shape, face):
     solids = shape.Solids
     if touching:
         if Part.makeCompound(touching).common(face).Area > TOL:
-            return True
-        return bool(solids) and shape.common(face).Area > TOL
+            return 'surface'
+        return 'interior' if solids and shape.common(face).Area > TOL else None
     if not solids:
-        return False
+        return None
     point = interior_point(face)
     if point is None:
-        return shape.common(face).Area > TOL
-    return any(solid.isInside(point, TOL, True) for solid in solids)
+        inside = shape.common(face).Area > TOL
+    else:
+        inside = any(solid.isInside(point, TOL, True) for solid in solids)
+    return 'interior' if inside else None
 
 
 def triangle_completions(shapes, first, second):
@@ -393,7 +401,8 @@ def loop_completions(shapes, edge, loose=()):
     are split where the new edge ends inside them. From each end of the new
     edge the walk keeps turning as tightly as possible to one side, which
     traces the smallest region bounded there. Loops that overlap an existing
-    face or pass through a solid are rejected.
+    face, or pass through a solid along its own edges, are rejected. Loose
+    lines may close a loop through a solid: its face is a separate piece.
     """
     if edge.Degenerated or len(edge.Vertexes) != 2:
         return []
@@ -462,7 +471,9 @@ def loop_completions(shapes, edge, loose=()):
         plane = geo.Plane.from_normal(first, normal)
         # Only edges whose bounds reach the plane can hold one of its pieces.
         candidates = lookup.near_plane(plane.origin, plane.normal, 2 * flatness) + list(range(count, len(everything)))
-        graph = [piece for i in candidates if pool_item(i) for piece in graph_pieces(i)]
+        # Each piece with the shape it belongs to; loose lines belong to none.
+        graph = [(piece, lookup.owners[i] if i < count else None)
+                 for i in candidates if pool_item(i) for piece in graph_pieces(i)]
 
         def flat(item):
             samples = [v.Point for v in item.Vertexes] + [item.valueAt(item.FirstParameter + t * (item.LastParameter - item.FirstParameter)) for t in (.25, .5, .75)]
@@ -474,7 +485,9 @@ def loop_completions(shapes, edge, loose=()):
             sides = [(corner - plane.origin).dot(plane.normal) for corner in corners]
             return min(sides) <= flatness and max(sides) >= -flatness
 
-        edges = [edge] + [item for item in graph if near(item) and flat(item)]
+        kept = [(item, owner) for item, owner in graph if near(item) and flat(item)]
+        edges = [edge] + [item for item, _ in kept]
+        owners = [None] + [owner for _, owner in kept]
         nodes, cells = [], {}
 
         def node(point):
@@ -541,8 +554,16 @@ def loop_completions(shapes, edge, loose=()):
                 continue
             if not face.isValid() or face.Area <= TOL or len(face.Wires) != 1:
                 continue
-            # Both reject the loop; the indexed test is the cheaper one.
-            if covers_surface(shapes, face) or any(overlaps(shape, face) for shape in shapes if shape.Faces):
+            # A loop on an existing face is rejected; the indexed test is the
+            # cheaper one. So is a loop through a solid along its own edges, a
+            # face inside it. Loose lines may close a loop through a solid:
+            # its face is a separate piece, to pull and join to it later.
+            if covers_surface(shapes, face):
+                continue
+            owned = {owners[index] for index, _ in path}
+            if any(kind == 'surface' or kind == 'interior' and owner in owned
+                   for owner, kind in ((owner, overlap(shape, face)) for owner, shape in enumerate(shapes)
+                                       if shape.Faces)):
                 continue
             if any(existing.common(face).Area > TOL for existing in result):
                 continue

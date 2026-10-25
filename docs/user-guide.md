@@ -202,7 +202,7 @@ A line that runs past the edge of a flat face is split where it crosses, as in S
 
 You can also click three corners, then click the first corner again to close a triangle. Existing loose lines that become complete sides of the new face are consumed in the same Undo step, provided no other object depends on them.
 
-A triangle can join an open shape; sealing its last opening restores a solid. A triangle bridging a closed solid remains a separate face, and pulling that separate face creates a separate solid. Larger polygon loops and curved boundaries are not filled automatically yet. Existing surfaces and solid interiors are excluded from automatic face creation.
+A triangle can join an open shape; sealing its last opening restores a solid. A triangle bridging a closed solid remains a separate face, and pulling that separate face creates a separate solid. A loop never becomes a second face over an existing one, and a loop along a solid's own edges makes no face inside it. Loose lines that close a loop through a solid make a separate face, which you can pull and then join to the solid with **Union**.
 
 ### Snap to vertices, edge midpoints, and face centers
 
