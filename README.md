@@ -14,7 +14,9 @@ SimpleCAD is a direct modeling workbench for FreeCAD, inspired by SketchUp.
 1. Download this branch source code
 2. Put the `simplecad` folder into your FreeCAD Mod directory
 3. Restart FreeCAD, find SimpleCAD workbench
-![演示动图]([粘贴你复制的图片url](https://github.com/snakeqiuwei/SimpleCAD/blob/zh-and-shapr-pushpull/cffCy6zYdv.png))
+# SimpleCAD (Chinese + Shapr3D-style Push/Pull Mod)
+![演示截图](https://github.com/snakeqiuwei/SimpleCAD/raw/zh-and-shapr-pushpull/cffCy6zYdv.png)
+This is a modified version of SimpleCAD for FreeCAD.
 ## 中文介绍
 本分支为 SimpleCAD 修改增强版：
 ✅ 全部界面汉化
