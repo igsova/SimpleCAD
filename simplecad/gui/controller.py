@@ -58,6 +58,8 @@ class Controller(QtCore.QObject):
         self.polygon_sides = 6
         self.base_snapper = None
         self.move_outline = None
+        self.move_faces = None
+        self.move_panel = None
         self.drawing_surface = None
         self.surface_frame = None
         self.surface_point = None
@@ -213,6 +215,10 @@ class Controller(QtCore.QObject):
         if self.round_session is not None:
             session, self.round_session = self.round_session, None
             session.close()
+        if self.move_panel is not None:
+            panel, self.move_panel = self.move_panel, None
+            panel.close()
+        self.move_faces = None
         self.selection.cancel()
         self.timer.stop()
         if self.callback is not None:
@@ -635,7 +641,12 @@ class Controller(QtCore.QObject):
             self.auto_line = False
             self.line_undo_count = self.doc.UndoCount
             self.last_pos = None
-            self.objects = self.selected() if tool in ("Move", "Copy") else []
+            from .tools.move import faces_to_move
+            # Faces of one solid move on their own, as a feature of it.
+            self.move_faces = (faces_to_move(Gui.Selection.getSelectionEx(), self.doc)
+                               if tool == "Move" else None)
+            self.objects = ([self.move_faces[0]] if self.move_faces else
+                            self.selected() if tool in ("Move", "Copy") else [])
             for obj in self.objects:
                 ops.editable(obj)
             self.distance = 0.0
@@ -644,8 +655,10 @@ class Controller(QtCore.QObject):
             self.pull_reference = None
             self.down_pos = None
             self.dragging = False
-            self.snapper = None if tool in ("Offset", "Elongate") else Snapper(self.doc, self.view, self.objects,
-                                                                collect=tool != "PushPull")
+            # Moved faces stay part of their object, whose other faces the
+            # destination can snap to.
+            self.snapper = None if tool in ("Offset", "Elongate") else Snapper(
+                self.doc, self.view, [] if self.move_faces else self.objects, collect=tool != "PushPull")
             # Move/Copy pick their base point on the moved objects themselves.
             self.base_snapper = None
             if tool == "PushPull":
@@ -700,6 +713,12 @@ class Controller(QtCore.QObject):
                           "Move": "Click a base point on the selected objects, or click an object",
                           "Copy": "Click a base point on the selected objects, or click an object"}[tool]
                          + (" · Arrows lock a plane" if tool in DRAW_TOOLS else ""))
+            if self.move_faces:
+                count = len(self.move_faces[1])
+                self.message("Move %d face%s of %s · Click a base point, or type X, Y, Z in the panel"
+                             % (count, "" if count == 1 else "s", self.move_faces[0].Label))
+            if tool in ("Move", "Copy") and self.objects:
+                self.open_move_panel()
             if self.surface_mode:
                 self.message('Surface '+tool+' · Wrap across connected faces of one object · Snap is independent')
             elif plane_only:
@@ -751,7 +770,11 @@ class Controller(QtCore.QObject):
 
     def focus_view(self):
         self.size_input.close()  # back to the view: typing a size is over
-        mdi = Gui.getMainWindow().findChild(QtWidgets.QMdiArea)
+        window = Gui.getMainWindow()
+        # A tool panel is a window of its own; while it is the active one,
+        # keys such as Tab go to its fields however the view is focused.
+        window.activateWindow()
+        mdi = window.findChild(QtWidgets.QMdiArea)
         if mdi and mdi.currentSubWindow():
             mdi.currentSubWindow().widget().setFocus()
 
@@ -946,6 +969,9 @@ class Controller(QtCore.QObject):
         if self.push_pull_input is not None:
             if self.push_pull_input.click(pos): self.commit()
             return
+        if self.move_panel is not None and self.move_panel.typed:
+            self.message("Press Enter or Apply to move by the typed X, Y, Z · Esc cancels")
+            return
         if self.anchor is not None:
             if self.motion(pos) is False:
                 return
@@ -994,6 +1020,7 @@ class Controller(QtCore.QObject):
                     raise ValueError("Click an object to " + self.tool.lower() + ".")
                 self.objects = [ops.editable(hit[0])]
                 self.snapper = Snapper(self.doc, self.view, self.objects)
+                self.open_move_panel()
             self.anchor = self.base_snap(pos, hit).point
             self.plane.origin = self.anchor
             self.down_pos = pos
@@ -1112,6 +1139,8 @@ class Controller(QtCore.QObject):
 
     def hover(self, pos):
         self.last_pos = pos
+        if self.move_panel is not None and self.move_panel.typed:
+            return  # the typed X, Y, Z hold until Apply or Esc
         if self.anchor is None:
             if self.tool in ("Rectangle", "Circle", "Sphere", "Polygon", "Line", "Arc", "Arc2Point", "Tape"):
                 start = self.drawing_start(pos)
@@ -1216,8 +1245,47 @@ class Controller(QtCore.QObject):
         self.controls.label.setText((("On opposite face" if label == 'Opposite face' else label + ' snapped')
                                      if snapped else "Push/Pull") + " %.2f mm" % self.distance)
 
+    def open_move_panel(self):
+        """The Move/Copy panel, once the objects or faces to move are known."""
+        if self.move_panel is not None or not self.objects or not App.GuiUp:
+            return
+        from .tools.move import MovePanel
+        if self.move_faces:
+            obj, names = self.move_faces
+            title = "%d face%s of %s" % (len(names), "" if len(names) == 1 else "s", obj.Label)
+        else:
+            count = len(self.objects)
+            title = (self.objects[0].Label if count == 1 else "%d objects" % count)
+        self.move_panel = MovePanel(self, title)
+        self.focus_view()
+
+    def typed_move(self, delta):
+        """Preview a move typed in the panel, from the base point or the selection's center."""
+        if self.anchor is None:
+            if self.move_faces:
+                obj, names = self.move_faces
+                box = Part.makeCompound([obj.Shape.getElement(name) for name in names]).BoundBox
+            else:
+                box = App.BoundBox()
+                for obj in self.objects:
+                    box.add(obj.Shape.BoundBox)
+            self.anchor = box.Center
+            if self.plane is None:
+                self.plane = geo.Plane.from_normal(self.anchor, self.view.getViewDirection())
+            self.plane.origin = self.anchor
+        self.dragging = False
+        self.point = self.anchor + delta
+        self.show_points()
+
     def moving_outline(self):
         """The moved objects' outline, sampled once per drag and then translated."""
+        if self.move_faces:
+            obj, names = self.move_faces
+            shapes = [Part.makeCompound([obj.Shape.getElement(name) for name in names])]
+            cached = self.move_outline
+            if cached is None or not cached[0][0].isEqual(shapes[0]):
+                cached = self.move_outline = (shapes, edges(shapes[0]))
+            return cached[1]
         shapes = [obj.Shape for obj in self.objects]
         cached = self.move_outline
         if (cached is None or len(cached[0]) != len(shapes)
@@ -1300,6 +1368,8 @@ class Controller(QtCore.QObject):
                                 center_snapped=self.hint_captured(snap, center),
                                 moving=self.moving_outline(), offset=delta)
             self.controls.value.setPlaceholderText("%.2f mm" % delta.Length)
+            if self.move_panel is not None:
+                self.move_panel.show(delta)
 
     def typed_size(self, text):
         """Show a size being typed beside the shape being drawn; Enter draws it.
@@ -1388,6 +1458,8 @@ class Controller(QtCore.QObject):
                 else:
                     raise ValueError('Enter dx, dy, dz (for example 5, 0, -2), or one distance on a locked axis.')
                 self.point = self.anchor+delta
+            elif self.tool in ("Move", "Copy") and len(text.split(',')) == 3:
+                self.point = self.anchor + geo.V(*[geo.parse_length(value) for value in text.split(',')])
             elif self.tool == "PushPull":
                 self.distance = geo.parse_length(text)
             elif self.tool in ("Circle", "Sphere"):
@@ -1556,9 +1628,15 @@ class Controller(QtCore.QObject):
             results = [ops.move_vertex(self.obj, self.vertex_name, self.point-self.anchor, self.vertex_neighborhood)]
         elif self.tool == "PushPull":
             results = ops.extrude(self.obj, self.face, self.distance, return_pieces=True)
+        elif self.move_faces:
+            from ..surfaces import operations as surface_ops
+            obj, names = self.move_faces
+            surface_ops.move_faces(obj, names, self.point - self.anchor)
+            results = [obj]
         else:
             results = ops.transform(self.objects, self.point - self.anchor, copy=self.tool == "Copy")
-        title = "Move Vertex" if self.tool == "VertexMove" else self.tool
+        title = ("Move Vertex" if self.tool == "VertexMove" else
+                 "Move faces" if self.move_faces else self.tool)
         if title == 'PushPull' and len(results) > 1:
             title = 'Push/Pull · ' + str(len(results)) + ' pieces'
         surface_drawing = self.drawing_surface is not None
@@ -1667,6 +1745,8 @@ class Controller(QtCore.QObject):
             return True
         if event.type() not in (QtCore.QEvent.KeyPress, QtCore.QEvent.ShortcutOverride):
             return False
+        if self.move_panel is not None and self.move_panel.owns(watched):
+            return False  # typing in the Move panel's own fields
         focus = QtWidgets.QApplication.focusWidget()
         in_box = self.size_input.owns(focus)
         in_value = bool(focus and (in_box or focus == self.controls.value or focus == self.controls.sides

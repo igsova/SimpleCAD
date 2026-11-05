@@ -48,7 +48,7 @@ REQUIREMENTS = {
     'Offset': 'Click a flat CAD face or an edge after starting, or preselect one.',
     'Elongate': 'Click a CAD face or hole rim after starting, or preselect one.',
     'VertexMove': 'Click a CAD vertex after starting, or preselect one.',
-    'Move': 'Select CAD objects, or start and click a CAD object in the view.',
+    'Move': 'Select CAD objects or the faces of one feature, or start and click a CAD object in the view.',
     'Copy': 'Select CAD objects, or start and click a CAD object in the view.',
     'ConvertMesh': 'Select one STL mesh, or leave only one mesh visible with nothing selected.',
     'MeshSplit': 'Select one STL mesh, or leave only one mesh visible with nothing selected.',

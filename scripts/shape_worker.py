@@ -37,6 +37,8 @@ def main():
         if operation == 'remove_faces':
             result, report = se.remove_faces(shape, options['faces'], progress,
                                              options.get('keep_others', False))
+        elif operation == 'move_faces':
+            result, report = se.move_faces(shape, options['faces'], options['delta'], progress)
         elif operation == 'imprint':
             result, report = se.imprint(shape, options['faces'], read(folder / 'profile.brep'),
                                         FreeCAD.Vector(*options['direction']), options['mode'],
