@@ -6,24 +6,36 @@ from ..qt import QtCore, QtWidgets
 
 
 def faces_to_move(selection, doc):
-    """(object, face names) when only faces of one solid are selected, else None.
+    """(object, face names) when faces of one solid are selected, else None.
 
-    A whole object, or an edge or vertex in the selection, keeps Move on whole
-    objects as before.
+    Edges and vertices of those faces may be selected with them, as clicking
+    around a boss easily picks its rims too; they move with the faces. A
+    whole object, or an edge or vertex off the selected faces, keeps Move on
+    whole objects as before.
     """
     items = [item for item in selection if item.Object.Document == doc]
     if not items or any(not item.SubElementNames for item in items):
         return None
     names = [name for item in items for name in item.SubElementNames]
-    if not all(name.startswith('Face') for name in names):
+    faces = list(dict.fromkeys(name for name in names if name.startswith('Face')))
+    if not faces:
         return None
     owners = {item.Object for item in items}
     if len(owners) > 1:
         raise ValueError('Select faces of one object to move them, or select whole objects.')
     obj = items[0].Object
-    if not getattr(getattr(obj, 'Shape', None), 'Solids', None):
+    shape = getattr(obj, 'Shape', None)
+    others = [name for name in names if not name.startswith('Face')]
+    if others:
+        chosen = [shape.getElement(name) for name in faces]
+        for name in others:
+            element = shape.getElement(name)
+            parts = (lambda face: face.Edges) if name.startswith('Edge') else (lambda face: face.Vertexes)
+            if not any(element.isSame(part) for face in chosen for part in parts(face)):
+                return None
+    if not getattr(shape, 'Solids', None):
         raise ValueError('Moving faces needs a closed solid. Select the whole object to move it.')
-    return obj, list(dict.fromkeys(names))
+    return obj, faces
 
 
 class MovePanel:

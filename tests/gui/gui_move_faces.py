@@ -75,8 +75,19 @@ def run(screenshot=None):
         # Faces of one solid: only they move; the rest of the tray stays.
         names = boss_faces()
         assert len(names) == 4, names
+        # Rim edges picked along with the faces move with them.
+        rim = next('Edge%d' % (i + 1) for i, e in enumerate(tray.Shape.Edges)
+                   if any(e.isSame(f) for f in tray.Shape.getElement(names[0]).Edges))
+        far = next('Edge%d' % (i + 1) for i, e in enumerate(tray.Shape.Edges) if e.BoundBox.XMin > 30)
         Gui.Selection.clearSelection()
         for name in names:
+            Gui.Selection.addSelection(tray, name)
+        Gui.Selection.addSelection(tray, far)
+        c.start("Move"); flush()
+        assert c.move_faces is None, "an edge off the faces keeps Move on the whole object"
+        c.cancel(quiet=True)
+        Gui.Selection.clearSelection()
+        for name in names + [rim]:
             Gui.Selection.addSelection(tray, name)
         c.start("Move"); flush()
         panel = c.move_panel

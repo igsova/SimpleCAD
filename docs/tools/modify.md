@@ -454,7 +454,7 @@ Move slides whole objects from a base point to a destination, or one feature of 
 
 **Notes**
 
-- With only faces of one solid selected, Move moves just them: the faces are deleted and healed as Delete & heal does, then the boss or hole they form is rebuilt at the new place. A boss with a hole in it moves as one when you select the faces of both. Each such move is checked, and refused without a change when the faces cannot be lifted off on their own or the feature would no longer touch the solid.
+- With only faces of one solid selected, Move moves just them; edges and corners of those faces may be selected with them: the faces are deleted and healed as Delete & heal does, then the boss or hole they form is rebuilt at the new place. A boss with a hole in it moves as one when you select the faces of both. Each such move is checked, and refused without a change when the faces cannot be lifted off on their own or the feature would no longer touch the solid.
 - With a whole object, an edge or a vertex in the selection, Move acts on whole objects. Copy always copies whole objects.
 - A typed distance follows the locked axis, or the direction from the base point to the pointer. Move the pointer or lock an axis before you type. Units such as 2 cm or 1 in are accepted.
 - Locked objects are refused; unlock them first. Copy still works on locked objects.
