@@ -1,5 +1,4 @@
 """Move and Copy panel: the move as X, Y and Z distances, typed or followed live."""
-import FreeCAD as App
 import FreeCADGui as Gui
 from ...core import geometry as geo
 from ..qt import QtCore, QtWidgets
