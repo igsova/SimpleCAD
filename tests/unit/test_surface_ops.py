@@ -171,6 +171,84 @@ class OffsetShellDraftTests(DocumentCase):
         self.assertLess(region.distToShape(Part.Vertex(point))[0], 1e-6)
 
 
+class MoveFacesTests(DocumentCase):
+    """Move a feature, such as a boss or a hole, along the solid it belongs to."""
+
+    @staticmethod
+    def tray():
+        """A 40 x 30 x 4 plate with a 3 mm boss, a 1 mm hole down it and a 2 mm hole in the plate."""
+        plate = Part.makeBox(40, 30, 4)
+        boss = Part.makeCylinder(3, 8, V(10, 10, 4))
+        hole = Part.makeCylinder(1, 6, V(10, 10, 6))
+        pocket = Part.makeCylinder(2, 4, V(30, 20, 0))
+        return plate.fuse(boss).cut(hole).cut(pocket).removeSplitter()
+
+    @staticmethod
+    def names(obj, center, radius):
+        """The faces lying within ``radius`` of a vertical axis through ``center``, above the plate's top."""
+        found = []
+        for i, face in enumerate(obj.Shape.Faces):
+            box = face.BoundBox
+            if (abs(box.Center.x - center.x) < 1e-6 and abs(box.Center.y - center.y) < 1e-6
+                    and box.XLength <= 2 * radius + 1e-6 and box.ZMax > center.z + 1e-6):
+                found.append('Face%d' % (i + 1))
+        return found
+
+    @staticmethod
+    def axes(obj):
+        return sorted((round(f.Surface.Center.x, 6), round(f.Surface.Center.y, 6), round(f.Surface.Radius, 6))
+                      for f in obj.Shape.Faces if isinstance(f.Surface, Part.Cylinder))
+
+    def test_a_boss_with_a_hole_moves_on_its_own_in_one_undo_step(self):
+        placement = App.Placement(V(5, 6, 7), App.Rotation(V(0, 0, 1), 90))
+        obj = self.add(self.tray(), placement)
+        local = obj.Shape.copy()
+        local.Placement = App.Placement()
+        volume, count, undo = obj.Shape.Volume, len(obj.Shape.Faces), self.doc.UndoCount
+        boss = self.names(self.add(local), V(10, 10, 4), 3)
+        self.assertEqual(len(boss), 4)  # side, top, hole wall, hole floor
+        # World +Y is local +X once the object is turned 90 degrees about Z.
+        report = so.move_faces(obj, boss, V(0, 15, 0))
+        self.assertTrue(obj.Placement.isSame(placement, 1e-9))
+        self.assertAlmostEqual(obj.Shape.Volume, volume, places=3)
+        self.assertEqual(len(obj.Shape.Faces), count)
+        self.assertEqual(self.axes(self.add(se.solid_body(so.local(obj)))),
+                         [(25.0, 10.0, 1.0), (25.0, 10.0, 3.0), (30.0, 20.0, 2.0)])
+        self.assertAlmostEqual(report['volume_change'], 0, places=3)
+        self.assertEqual(self.doc.UndoCount, undo + 1)
+        self.doc.undo()
+        self.assertEqual(len(obj.Shape.Faces), count)
+
+    def test_a_hole_moves_through_the_plate(self):
+        obj = self.add(self.tray())
+        hole = [n for n in ('Face%d' % (i + 1) for i in range(len(obj.Shape.Faces)))
+                if isinstance(obj.Shape.getElement(n).Surface, Part.Cylinder)
+                and abs(obj.Shape.getElement(n).Surface.Radius - 2) < 1e-6]
+        volume = obj.Shape.Volume
+        so.move_faces(obj, hole, V(-5, 3, 0))
+        self.assertAlmostEqual(obj.Shape.Volume, volume, places=3)
+        self.assertIn((25.0, 23.0, 2.0), self.axes(obj))
+        self.assertTrue(obj.Shape.isValid())
+
+    def test_a_feature_lifted_off_the_solid_is_refused_unchanged(self):
+        obj = self.add(self.tray())
+        before, undo = (obj.Shape.Volume, len(obj.Shape.Faces), obj.Shape.BoundBox), self.doc.UndoCount
+        boss = self.names(obj, V(10, 10, 4), 3)
+        with self.assertRaisesRegex(ValueError, 'no longer touch'):
+            so.move_faces(obj, boss, V(0, 0, 20))
+        with self.assertRaises(ValueError):
+            so.move_faces(obj, boss, V())
+        self.assertAlmostEqual(obj.Shape.Volume, before[0], places=6)
+        self.assertEqual(len(obj.Shape.Faces), before[1])
+        self.assertTrue(obj.Shape.BoundBox.isInside(before[2]) and before[2].isInside(obj.Shape.BoundBox))
+        self.assertEqual(self.doc.UndoCount, undo)
+
+    def test_every_face_is_refused(self):
+        obj = self.add(Part.makeBox(10, 10, 10))
+        with self.assertRaisesRegex(ValueError, 'select the object'):
+            se.move_faces(obj.Shape, range(6), (1, 0, 0))
+
+
 class PatternTests(DocumentCase):
     def test_grid_radial_and_path(self):
         obj = self.add(Part.makeBox(2, 2, 2), App.Placement(V(10, 0, 0), App.Rotation()))

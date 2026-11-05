@@ -27,7 +27,7 @@ TOOLS = [
     ("Intersect", "Intersect Faces", "I: select crossing faces or objects; split both surfaces and keep the regions for deletion"),
     ("Union", "Union", "J: join selected whole objects into one closed solid; remove internal faces and redundant dividing edges; Undo restores the pieces"),
     ("VertexMove", "Move Vertex", "V: drag a corner to deform adjoining flat faces; X/Y/Z locks an axis; Tab for dx, dy, dz"),
-    ("Move", "Move", "M: select objects, click a base point, then a destination"),
+    ("Move", "Move", "M: select objects, or the faces of a boss or hole to move just that; click a base point and a destination, or type X, Y, Z in the panel"),
     ("Rotate", "Rotate", "Q: rotate whole objects or selected lines/arcs around a center or axis; preview before applying"),
     ("Deform", "Bend / Soft Deform", "N: select a region on one object; move it with smooth falloff or bend along an axis; preview before applying"),
     ("Scale", "Scale / Stretch", "K: resize whole objects uniformly or stretch X/Y/Z independently, using world or local axes"),

@@ -417,7 +417,7 @@ Move Vertex drags one corner of a part and reshapes the flat faces around it. Fa
 
 ## Move { #move }
 
-Move slides whole objects from a base point to a destination. Both points snap to corners, edge midpoints, face centers and hole or circle centers, so you can set one part exactly onto another.
+Move slides whole objects from a base point to a destination, or one feature of a solid, such as a boss or a hole, along it. Both points snap to corners, edge midpoints, face centers and hole or circle centers, so you can set one part exactly onto another. A panel shows the move as X, Y and Z distances, which you can also type.
 
 ![](../../Resources/icons/move.svg){ .tool-icon } Modify toolbar · Shortcut <kbd>M</kbd>
 { .tool-facts }
@@ -429,17 +429,18 @@ Move slides whole objects from a base point to a destination. Both points snap t
 
 **Steps**
 
-1. Select the objects to move, or start Move with nothing selected and click the object you want.
-2. Click Move or press M with the 3D view focused.
+1. Select the objects to move, or start Move with nothing selected and click the object you want. To move only a feature of a solid, such as a boss, select all of its faces instead: its sides, its top and any hole in it.
+2. Click Move or press M with the 3D view focused. A panel opens with X, Y and Z fields.
 3. Click a base point on the objects. A snap marker shows which point is caught.
-4. Move the pointer. An outline of the objects follows it.
+4. Move the pointer. An outline of the objects or faces follows it, and the panel shows the distances.
 5. Click the destination, or drag from the base point and release there.
-6. For an exact distance, press X, Y or Z to lock an axis, then press Tab, type the distance and press Enter.
+6. For an exact move, type the X, Y and Z distances in the panel and press Enter or Apply. You can also press X, Y or Z to lock an axis, then press Tab, type the distance and press Enter.
 
 **Options**
 
 | Option | What it does |
 | --- | --- |
+| X, Y, Z (panel) | The move along each world axis. They follow the pointer until you type in one; then the typed values hold until Apply or Esc. Units such as 2 cm or 1 in are accepted. |
 | Snap (status bar) | Turns automatic snapping on or off for both points. Move can snap to other objects anywhere in 3D, not only on a drawing plane. |
 
 **Keys**
@@ -447,13 +448,14 @@ Move slides whole objects from a base point to a destination. Both points snap t
 | Key | What it does |
 | --- | --- |
 | <kbd>X</kbd> / <kbd>Y</kbd> / <kbd>Z</kbd> | Lock or unlock movement along that world axis. |
-| <kbd>Tab</kbd> | Open a box beside the pointer to type a distance. |
-| <kbd>Enter</kbd> | Move by the typed distance along the locked axis, or along the current pointer direction. |
+| <kbd>Tab</kbd> | Open a box beside the pointer to type a distance, or dx, dy, dz such as 5, 0, -2. |
+| <kbd>Enter</kbd> | Move by the typed distance along the locked axis, or along the current pointer direction. In the panel, move by its X, Y and Z. |
 | <kbd>Esc</kbd> | Cancel without moving anything. |
 
 **Notes**
 
-- Move always acts on whole objects, even when you selected a face or an edge.
+- With only faces of one solid selected, Move moves just them; edges and corners of those faces may be selected with them: the faces are deleted and healed as Delete & heal does, then the boss or hole they form is rebuilt at the new place. A boss with a hole in it moves as one when you select the faces of both. Each such move is checked, and refused without a change when the faces cannot be lifted off on their own or the feature would no longer touch the solid.
+- With a whole object, an edge or a vertex in the selection, Move acts on whole objects. Copy always copies whole objects.
 - A typed distance follows the locked axis, or the direction from the base point to the pointer. Move the pointer or lock an axis before you type. Units such as 2 cm or 1 in are accepted.
 - Locked objects are refused; unlock them first. Copy still works on locked objects.
 - Moving a rectangle or other profile drawn on a solid detaches it from that solid.

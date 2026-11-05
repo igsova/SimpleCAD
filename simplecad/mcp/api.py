@@ -224,6 +224,8 @@ class ModelAPI:
             report = so.remove_rounds(owner, a['max_radius'], a.get('convexity', 'any'), a.get('faces', ()), dialog=False)
         elif operation == 'heal_faces':
             report = so.heal_faces(owner, a['faces'], dialog=False)
+        elif operation == 'move_faces':
+            report = so.move_faces(owner, a['faces'], geo.V(*a['delta']), dialog=False)
         elif operation == 'draw_on_surface':
             shape = a['shape']
             outline = surface_edit.outline(shape, width=a.get('width', 10.0), height=a.get('height', 10.0),
@@ -574,7 +576,7 @@ class ModelAPI:
         if operation == 'heal':
             reports = ops.heal(doc, [self.object(doc, n) for n in a['objects']])
             return self.stamp(doc, reports=reports)
-        if operation in ('find_rounds', 'remove_rounds', 'heal_faces', 'draw_on_surface', 'fill_holes',
+        if operation in ('find_rounds', 'remove_rounds', 'heal_faces', 'move_faces', 'draw_on_surface', 'fill_holes',
                          'unwrap_face', 'pattern', 'offset_faces', 'shell', 'draft_faces'):
             return self.surface(operation, doc, a)
         if operation in ('delete','cleanup'):

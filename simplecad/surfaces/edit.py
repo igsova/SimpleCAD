@@ -165,6 +165,66 @@ def remove_faces(shape, indices, progress=lambda message: None, keep_others=Fals
                      'faces_after': len(current.Faces)}
 
 
+# --- Move faces -------------------------------------------------------------
+
+def _volume(shape):
+    """The solids of a boolean result with real volume, or None."""
+    solids = [solid for solid in shape.Solids if solid.Volume > geo.EPS]
+    return Part.makeCompound(solids) if solids else None
+
+
+def move_faces(shape, indices, delta, progress=lambda message: None):
+    """Move a feature of a solid, such as a boss or a hole, to a new place.
+
+    The chosen faces are deleted and their neighbours grow to close the gap,
+    as Delete & heal does, which leaves the solid without the feature. What
+    the feature added to that solid (a boss) is fused back, and what it took
+    away (a hole) is cut again, both shifted by ``delta``. The faces of a
+    boss with a hole through it move together. Returns (shape, report).
+    """
+    solid_body(shape)
+    delta = V(*delta)
+    if delta.Length < geo.EPS:
+        raise ValueError('Choose a different destination.')
+    indices = sorted(set(int(i) for i in indices))
+    if not indices or indices[0] < 0 or indices[-1] >= len(shape.Faces):
+        raise ValueError('Select faces of this object to move.')
+    if len(indices) == len(shape.Faces):
+        raise ValueError('Every face is selected: select the object to move all of it.')
+    progress('Lifting %d face%s off the solid' % (len(indices), '' if len(indices) == 1 else 's'))
+    try:
+        base, report = remove_faces(shape, indices, keep_others=True)
+    except ValueError as error:
+        raise ValueError('These faces cannot be lifted off on their own. Select every face of the feature: '
+                         'its sides, its top and any hole in it.') from error
+    if report['failed']:
+        raise ValueError('%d of these faces cannot be lifted off. Select every face of the feature: '
+                         'its sides, its top and any hole in it.' % report['failed'])
+    progress('Moving the feature')
+    try:
+        added = _volume(shape.cut(base))
+        taken = _volume(base.cut(shape))
+        if added is None and taken is None:
+            raise ValueError('These faces do not form a feature that can move.')
+        result = base
+        if added is not None:
+            result = result.fuse(added.translated(delta))
+        if taken is not None:
+            result = result.cut(taken.translated(delta))
+        result = _single(result.removeSplitter())
+    except (Part.OCCError, RuntimeError) as error:
+        raise ValueError('The feature could not be rebuilt at its new place.') from error
+    try:
+        checked(result, shape)
+    except ValueError as error:
+        if 'split' in str(error):
+            raise ValueError('At its new place the feature would no longer touch the solid. '
+                             'Move it less far, or along the face it stands on.') from error
+        raise
+    return result, {'faces_before': len(shape.Faces), 'faces_after': len(result.Faces),
+                    'volume_change': result.Volume - shape.Volume}
+
+
 # --- Rounds -----------------------------------------------------------------
 
 def _domain_points(face, count=3):

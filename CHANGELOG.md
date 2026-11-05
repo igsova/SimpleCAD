@@ -5,6 +5,16 @@ commands, and reconnect an MCP client to refresh its tool list.
 
 ## Unreleased
 
+### Added
+
+- **Move** moves just a feature of a solid, such as a boss or a hole, when
+  only its faces are selected. The faces are healed away and the feature is
+  rebuilt at the new place, in one Undo step. Move used to take the whole
+  object with it. MCP: `move_faces`.
+- **Move** and **Copy** open a panel with X, Y and Z fields. They show the
+  move while you drag, and typing in them moves by exact distances. Tab also
+  takes dx, dy, dz.
+
 ### Fixed
 
 - A size typed during **Push/Pull**, **Offset** or **Elongate** opens its box

@@ -33,7 +33,7 @@ class MCPProtocolTests(unittest.TestCase):
         self.assertEqual(self.request('ping')['result'],{})
         self.assertEqual(self.initialize('2025-06-18')['result']['protocolVersion'],'2025-06-18')
         self.assertIn('error',self.initialize())
-        self.assertEqual(len(self.request('tools/list')['result']['tools']),76)
+        self.assertEqual(len(self.request('tools/list')['result']['tools']),77)
         self.assertEqual(self.request('resources/list')['error']['code'],-32601)
         self.call.assert_not_called()
 
@@ -159,7 +159,8 @@ class MCPProtocolTests(unittest.TestCase):
             'document':'Doc','expected_revision':'current','objects':['Part'],'kind':'path','count':5,
             'path':{'object':'Rail','elements':['Edge1']},'align':False}})
         self.assertNotIn('error',reply)
-        invalid=(('heal_faces',{'faces':[]}),('heal_faces',{'faces':['Edge1']}),('remove_rounds',{'max_radius':0}),
+        invalid=(('move_faces',{'faces':['Face1']}),('move_faces',{'faces':['Face1'],'delta':[1,2]}),
+                 ('heal_faces',{'faces':[]}),('heal_faces',{'faces':['Edge1']}),('remove_rounds',{'max_radius':0}),
                  ('remove_rounds',{'max_radius':1,'convexity':'both'}),('draw_on_surface',{'faces':['Face1'],'shape':'star'}),
                  ('draw_on_surface',{'faces':['Face1'],'shape':'polygon','sides':2}),('fill_holes',{'edges':['Face1']}),
                  ('unwrap_face',{'face':'Edge1'}),('offset_faces',{'faces':['Face1']}),('offset_faces',{'faces':[],'distance':1}),
@@ -171,7 +172,7 @@ class MCPProtocolTests(unittest.TestCase):
         self.assertTrue(BY_NAME['simplecad_find_rounds']['annotations']['readOnlyHint'])
         for name in ('heal_faces','remove_rounds'):
             self.assertTrue(BY_NAME['simplecad_'+name]['annotations']['destructiveHint'])
-        for name in ('heal_faces','remove_rounds','draw_on_surface','fill_holes','unwrap_face','pattern','offset_faces',
+        for name in ('heal_faces','move_faces','remove_rounds','draw_on_surface','fill_holes','unwrap_face','pattern','offset_faces',
                      'shell','draft_faces'):
             self.assertIn('expected_revision',BY_NAME['simplecad_'+name]['inputSchema']['required'])
 

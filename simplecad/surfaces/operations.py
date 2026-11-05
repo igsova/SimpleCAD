@@ -72,6 +72,23 @@ def heal_faces(obj, names, dialog=None):
     return report
 
 
+def move_faces(obj, names, delta, dialog=None):
+    """Move a feature made of these faces, such as a boss or a hole, by a world delta."""
+    _target(obj)
+    faces = indices(obj, names)
+    if not faces:
+        raise ValueError('Select the faces to move.')
+    if delta.Length < geo.EPS:
+        raise ValueError('Choose a different destination.')
+    shape = se.solid_body(local(obj))
+    step = obj.Placement.Rotation.inverted().multVec(delta)
+    result, report = shape_jobs.run('move_faces', shape, {'faces': faces, 'delta': [step.x, step.y, step.z]},
+                                    label='Moving %d face%s' % (len(faces), '' if len(faces) == 1 else 's'),
+                                    dialog=dialog)
+    _commit(obj, result, 'Move faces')
+    return report
+
+
 def rounds(obj, max_radius, convexity='any', names=()):
     """The rounds a Remove rounds would take away: [{'index', 'radius', 'convex'}]."""
     ops.editable(obj)
