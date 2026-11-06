@@ -86,6 +86,25 @@ class SmoothSurfaceTests(unittest.TestCase):
             self.assertTrue(all(edge.isClosed() for edge in rims))
         self.assertAlmostEqual(min(face.Surface.Radius for face in found), 2, delta=.05)
 
+    def test_rim_of_a_cone_in_several_patches_is_one_circle(self):
+        # The cone is fitted as several smooth patches, each bringing its
+        # own arc of each rim. The arcs share one circle, so the rim snaps
+        # and offsets as one: a circle drawn on it lies exactly on it.
+        body = Part.makeBox(30, 20, 6).cut(Part.makeCone(4, 2, 6, App.Vector(10, 10, 0)))
+        source = mesh(body)
+        points, triangles = indexed(source)
+        shape, _ = mesh_surfaces.reconstruct(points, triangles, True, .05)
+        self.check_solid(shape, source, .05)
+        for z, radius in ((0, 4), (6, 2)):
+            rim = [edge.Curve for edge in shape.Edges if isinstance(edge.Curve, Part.Circle)
+                   and abs(edge.Curve.Center.z-z) < 1e-6]
+            self.assertGreater(len(rim), 1)
+            for circle in rim:
+                self.assertLess((circle.Center-App.Vector(10, 10, z)).Length, 1e-3)
+                self.assertLess((circle.Center-rim[0].Center).Length, 1e-9)
+                self.assertAlmostEqual(circle.Radius, rim[0].Radius, places=9)
+                self.assertAlmostEqual(circle.Radius, radius, delta=.005)
+
     def test_open_dome_becomes_an_open_shell(self):
         sphere = Part.makeSphere(10)
         dome = Part.makeShell([face for face in sphere.cut(Part.makeBox(30, 30, 30, App.Vector(-15, -15, -30))).Faces
