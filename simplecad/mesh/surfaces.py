@@ -237,6 +237,75 @@ def _curve(points, tolerance, largest=math.inf, cylinder=None):
     return curve.toShape()
 
 
+def _loop_points(runs, seams):
+    return np.vstack([(seams[chain] if forward else seams[chain][::-1])[:-1] for chain, forward in runs])
+
+
+def _round_loops(chains, loops, patches, seams, tolerance, largest):
+    """Whole circles made of several chains, as {chain: circle}.
+
+    A rim between a flat face and a curved surface fitted as several
+    patches is split into one chain per patch. Fitted one at a time, each
+    arc gets its own center, a hundredth of a millimeter or so from its
+    neighbors', and the rim is no longer one circle to snap or offset
+    from. Where all the chains of a loop lie within the edge tolerance of
+    one circle, they share it, coaxial with a cylinder beside them. The
+    vertices where the chains meet move onto that circle, in every chain
+    that ends there.
+    """
+    found, moved = {}, {}
+    for patch_loops in loops.values():
+        for runs in patch_loops:
+            members = [chain for chain, _ in runs]
+            if (len(runs) < 2 or len(set(members)) != len(members)
+                    or any(chains[chain].loose or chain in found for chain in members)
+                    # Each chain must be an arc on its own: a polygon's
+                    # corners alone also lie on one circle.
+                    or any(_arc(seams[chain], tolerance, largest) is None for chain in members)):
+                continue
+            cylinder = next((patches[side].surface for chain in members
+                             for side in (chains[chain].left, chains[chain].right)
+                             if side >= 0 and patches[side].surface.kind == 'cylinder'), None)
+            points = _loop_points(runs, seams)
+            edge = _arc(np.vstack((points, points[:1])), tolerance, largest, cylinder)
+            if edge is None:
+                continue
+            circle = edge.Curve
+            center, axis = np.asarray(tuple(circle.Center)), np.asarray(tuple(circle.Axis))
+            ends = {}
+            for chain in members:
+                for vertex, point in ((chains[chain].vertices[0], seams[chain][0]),
+                                      (chains[chain].vertices[-1], seams[chain][-1])):
+                    radial = point-center
+                    radial = radial-(radial @ axis)*axis
+                    ends[int(vertex)] = center+radial*(circle.Radius/max(float(np.linalg.norm(radial)), 1e-300))
+            if any(vertex in moved for vertex in ends):
+                continue
+            moved.update(ends)
+            for chain in members:
+                found[chain] = circle
+    for chain, seam in zip(chains, seams):
+        if not chain.loose:
+            for end in (0, -1):
+                if int(chain.vertices[end]) in moved:
+                    seam[end] = moved[int(chain.vertices[end])]
+    return found
+
+
+def _arc_of(circle, points):
+    """The arc of the circle from the points' first to last, along them."""
+    center, axis = np.asarray(tuple(circle.Center)), np.asarray(tuple(circle.Axis))
+    relative = points-center
+    within = relative-np.outer(relative @ axis, axis)
+    turn = np.unwrap(np.arctan2(np.cross(within[0], within) @ axis, within @ within[0]))[-1]
+    if turn < 0:
+        circle = Part.Circle(circle.Center, -circle.Axis, circle.Radius)
+    first, last = circle.parameter(_vector(points[0])), circle.parameter(_vector(points[-1]))
+    if last <= first:
+        last += 2*math.pi
+    return Part.Edge(circle, first, last)
+
+
 def _tessellated(shape, tolerance):
     """Area and enclosed volume of the shape's tessellation.
 
@@ -347,16 +416,28 @@ def reconstruct(mesh_points, mesh_faces, closed, tolerance, progress=lambda mess
     facets = surface_fit.Facets(mesh_points, mesh_faces)
     patches = surface_fit.fit_patches(facets, tolerance, progress)
     try:
-        return _assemble(facets, patches, closed, tolerance, progress)
+        return _join(facets, patches, closed, tolerance, progress)
     except ValueError:
         if not any(patch.surface.kind == 'cylinder' for patch in patches):
             raise
     progress('Fitting smooth surfaces without cylinders')
     patches = surface_fit.fit_patches(facets, tolerance, progress, cylinders=False)
-    return _assemble(facets, patches, closed, tolerance, progress)
+    return _join(facets, patches, closed, tolerance, progress)
 
 
-def _assemble(facets, patches, closed, tolerance, progress):
+def _join(facets, patches, closed, tolerance, progress):
+    """Assemble with shared rim circles, or with one arc per chain.
+
+    A shared circle moves the vertices where its arcs meet. Should that
+    keep the faces from joining, each arc is fitted on its own as before.
+    """
+    try:
+        return _assemble(facets, patches, closed, tolerance, progress)
+    except ValueError:
+        return _assemble(facets, patches, closed, tolerance, progress, round_loops=False)
+
+
+def _assemble(facets, patches, closed, tolerance, progress, round_loops=True):
     labels = np.empty(len(facets.faces), dtype=np.int64)
     for index, patch in enumerate(patches):
         labels[patch.triangles] = index
@@ -365,7 +446,7 @@ def _assemble(facets, patches, closed, tolerance, progress):
     for index, patch in enumerate(patches):
         if patch.surface.kind == 'cylinder':
             patch.surface.seam = _seam_angle(facets, patch.surface, chains, loops[index])
-    seams, edges, edge_gap = [], [], 0.0
+    seams, cylinders, edge_gap = [], [], 0.0
     for chain in chains:
         points, gap = _chain_points(facets, chain, patches, tolerance)
         cylinder = None
@@ -375,8 +456,12 @@ def _assemble(facets, patches, closed, tolerance, progress):
             if cylinder is not None:
                 points = _start_at_seam(points, cylinder)
         seams.append(points)
-        edges.append(_curve(points, tolerance/4, facets.extent, cylinder))
+        cylinders.append(cylinder)
         edge_gap = max(edge_gap, gap)
+    round_chains = _round_loops(chains, loops, patches, seams, tolerance/4, facets.extent) if round_loops else {}
+    edges = [_arc_of(round_chains[index], points) if index in round_chains
+             else _curve(points, tolerance/4, facets.extent, cylinder)
+             for index, (points, cylinder) in enumerate(zip(seams, cylinders))]
     if edge_gap > tolerance:
         raise ValueError('Neighboring fitted surfaces do not meet within the tolerance.')
     progress('Trimming fitted faces')
